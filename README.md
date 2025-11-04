@@ -16,7 +16,7 @@
 
 ## 安装方式
 - 安装 [Tampermonkey 插件](https://www.tampermonkey.net/)
-- 点击此处[安装脚本](https://greasyfork.org/zh-CN/scripts/554778-bilibili-purify) 或 [下载](./BilibiliPurify.js)并手动导入
+- 点击此处[安装脚本](https://greasyfork.org/zh-CN/scripts/554780-bilibili-purify) 或 [下载](./BilibiliPurify.js)并手动导入
 
 ## 开源许可证
 [MIT License](./LICENSE)
