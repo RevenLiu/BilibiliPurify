@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.0
+// @version      1.0.1
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -42,6 +42,8 @@
         'div.activity-m-v1.act-end',
         //视频页左侧条形广告
         'div.ad-report.strip-ad.left-banner',
+        //视频页合集列表
+        'div.video-pod.video-pod',
         //热搜
         'div.trending',
         //右上入口栏大会员
@@ -66,7 +68,11 @@
         'div.bili-danmaku-x-score.bili-danmaku-x-show',
         'div.bili-danmaku-x-cmd-shrink.bili-danmaku-x-show',
         //动态页面热搜
-        'div.bili-dyn-search-trendings'
+        'div.bili-dyn-search-trendings',
+        //剧播放页推荐列表
+        'div.recommend_wrap__PccwM',
+        //剧播放页大会员广告
+        'div.paybar_container__WApBR'
     ];
 
     const cssRules = hideSelectors.map(selector =>
@@ -371,7 +377,7 @@
         dialogOverlay.innerHTML = `
             <div id="comment-dialog">
                 <h2>请确认你真的想进入这个评论区。</h2>
-                <p>保持自省，不要被平台/媒体操控。</p>
+                <p>保持清醒，不要被平台/媒体操控。</p>
                 <p>思考：你现在希望从评论中获得什么？</p>
 
                 <div id="countdown">3</div>
