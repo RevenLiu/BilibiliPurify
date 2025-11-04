@@ -1,2 +1,25 @@
-# BilibiliPurify
-一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
+# Bilibili Purefy / Bilibili 纯粹化
+
+一个应用于 **Bilibili** 平台的篡改猴脚本（Tampermonkey UserScript）。
+
+以一种粗暴而直接的方式，抵抗商业化平台对人类注意力与情绪的利用。
+通过削弱算法、广告与信息噪音的影响，让你重新获得对自己使用体验与思考节奏的控制权。
+
+## 功能
+- 自动将主页直接跳转到搜索页，避免无意识刷屏和目的性视频推荐，拒绝算法。
+
+- 隐藏广告条、活动推送、无关入口与视频页右侧的推荐列表。
+  保留核心功能，去除视觉噪音。
+  
+- 默认锁定视频评论区，需手动操作解锁。
+  用以防止被平台、媒体或他人情绪牵动，提醒保持理性。
+
+## 安装方式
+- 安装 [Tampermonkey 插件](https://www.tampermonkey.net/)
+- 点击此处[安装脚本](https://greasyfork.org/zh-CN/scripts/554778-bilibili-purify) 或 [下载](./BilibiliPurify.js)并手动导入
+
+## 开源许可证
+[MIT License](./LICENSE)
+
+## 反馈或建议
+欢迎提交 [Issue](https://github.com/RevenLiu/BilibiliPurify/issues)
