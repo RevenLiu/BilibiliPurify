@@ -135,7 +135,10 @@
         //直播页粉丝勋章
         'div.fans-medal-item-ctnr.fans-medal-item-target.dp-i-block.p-relative.v-middle',
         //直播页聊天框装扮
-        'div.title-label.dp-i-block.p-relative.v-middle'
+        'div.title-label.dp-i-block.p-relative.v-middle',
+        //直播页聊天框信息提示
+        'div.chat-item.common-danmuku-msg.border-box',
+        'div.chat-item.convention-msg.border-box'
     ];
 
     const cssRules = hideSelectors.map(selector =>
