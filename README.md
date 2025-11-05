@@ -1,4 +1,4 @@
-# Bilibili Purefy / Bilibili 纯粹化
+# Bilibili Purify / Bilibili 纯粹化
 
 一个应用于 **Bilibili** 平台的篡改猴脚本（Tampermonkey UserScript）。
 
