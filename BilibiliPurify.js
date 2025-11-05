@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.1.4
+// @version      1.1.5
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -151,9 +151,26 @@
         'div.fans-medal-item-ctnr.fans-medal-item-target.dp-i-block.p-relative.v-middle',
         //直播页聊天框装扮
         'div.title-label.dp-i-block.p-relative.v-middle',
-        //直播页聊天框信息提示
+        //直播页聊天框信息提示/互动引导
         'div.chat-item.common-danmuku-msg.border-box',
         'div.chat-item.convention-msg.border-box',
+        'div.chat-item.misc-msg.guard-buy',
+        '#combo-card',
+        'div.super-gift-item animation',
+        'div.welcome-section-bottom',
+        //直播页聊天框礼物提示
+        'div.content-ctnr.border-box.p-relative',
+        'div.base-bubble-wrapper.super-gift-bubbles',
+        'div.gift-anim-setting',
+        'div.gift-bubble-setting',
+        'div.chat-item.gift-item',
+        //直播页聊天框SC
+        'div.pay-note-setting',
+        'div.msg-bubble-setting',
+        'div.chat-item.danmaku-item.superChat-card-detail',
+        'div.pay-note-panel',
+        //直播页主播头像框
+        'div.blive-avatar-pendant',
         //直播页播放器顶部移动式横幅广告
         'div.announcement-wrapper.clearfix.no-select',
         //直播页中心横向广告
