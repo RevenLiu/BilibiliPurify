@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.1.2
+// @version      1.1.3
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -154,7 +154,14 @@
         'div.chat-item.common-danmuku-msg.border-box',
         'div.chat-item.convention-msg.border-box',
         //直播页播放器顶部移动式横幅广告
-        'div.announcement-wrapper.clearfix.no-select'
+        'div.announcement-wrapper.clearfix.no-select',
+        //直播页中心横向广告
+        'div.flip-view.p-relative.over-hidden.w-100',
+        //直播分区页大型横向广告
+        'div.banner-ctn',
+        //直播分区页横幅广告
+        'div.index_flip-view-image-ctnr_ueRWr.index_ts-dot-4_afXVm',
+        'div.index_flip-view-titles_ILDY7'
     ];
 
     const cssRules = hideSelectors.map(selector =>
@@ -654,5 +661,46 @@
     if (window.location.hostname === 'live.bilibili.com' && 
        window.location.pathname === '/') {
        removeVideoOnly();
+    }
+
+    // 直播分区页横幅样式修改
+    function modifyBannerClass() {
+        const observer = new MutationObserver(() => {
+            const banners = document.querySelectorAll('div.index_flip-view_R276P.index_banner_bPw9q');
+            
+            banners.forEach(banner => {
+                // 检查是否已经添加了目标 class
+                if (!banner.classList.contains('index_no_pic_TF1Ph') || 
+                    !banner.classList.contains('bg-bright-filter')) {
+                    banner.className = 'index_flip-view_R276P index_banner_bPw9q index_no_pic_TF1Ph bg-bright-filter';
+                    console.log('[Bilibili纯粹化] 已修改横幅 class');
+                }
+            });
+        });
+        
+        // 开始监听
+        observer.observe(document.documentElement, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['class']
+        });
+        
+        console.log('[Bilibili纯粹化] 直播横幅样式修改已启用');
+    }
+
+    // 在直播分区页面启用横幅样式修改
+    if (window.location.hostname === 'live.bilibili.com'  &&  
+        (window.location.pathname.includes('/p/')   ||
+        //谁设计的这分区规范？？？
+        //英雄联盟分区
+         window.location.pathname.includes('/lol/') ||
+        //吃鸡行动分区
+         window.location.pathname.includes('/area/'))) {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', modifyBannerClass);
+        } else {
+            modifyBannerClass();
+        }
     }
 })();
