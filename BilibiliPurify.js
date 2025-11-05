@@ -43,8 +43,8 @@
         'div.activity-m-v1.act-end',
         //视频页左侧条形广告
         'div.ad-report.strip-ad.left-banner',
-        //视频页合集列表
-        'div.video-pod.video-pod',
+        //视频页合集列表 (开启会同时导致分p消失)
+        //'div.video-pod.video-pod',
         //热搜
         'div.trending',
         //右上入口栏大会员
@@ -53,7 +53,7 @@
         'a.default-entry',
         //左上入口栏下载客户端按钮
         'a.download-entry.download-client-trigger',
-        //?
+        //左上入口栏首页下拉菜单
         'div.v-popover.is-bottom-start',
         //左上入口栏首页箭头图标
         'svg.mini-header__arrow',
@@ -340,8 +340,18 @@
     console.log('[Bilibili纯粹化] 样式已注入');
 
     // 评论区锁定功能
-    function initCommentLock() {
-        const commentApp = document.querySelector('#commentapp');
+    function initCommentLock(pageType) {
+        var commentApp;
+        switch (pageType) {
+            case "video":
+                commentApp = document.querySelector('#commentapp');
+                break;
+            case "bangumi":
+                commentApp = document.querySelector('#comment-body');
+                break;
+            default:
+                return;
+        }
         if (!commentApp || document.querySelector('#comment-lock-container')) {
             return;
         }
@@ -452,11 +462,11 @@
     }
 
     // 评论区锁定初始化
-    function waitForComment() {
+    function waitForComment(pageType) {
         const observer = new MutationObserver(() => {
             const biliComments = document.querySelector('bili-comments')
             if (biliComments && !document.querySelector('#comment-lock-container')) {
-                initCommentLock();
+                initCommentLock(pageType);
             }
         });
 
@@ -466,12 +476,17 @@
                 subtree: true
             });
         } else {
-            setTimeout(waitForComment, 100);
+            setTimeout(() => waitForComment(pageType), 100);
         }
     }
 
-    // 只在视频页面启用评论区锁定
+    // 视频页评论区锁定
     if (window.location.pathname.includes('/video/')) {
-        waitForComment();
+        waitForComment("video");
+    }
+
+    //剧播放页评论区锁定
+    if (window.location.pathname.includes('/bangumi/')) {
+        waitForComment("bangumi");
     }
 })();
