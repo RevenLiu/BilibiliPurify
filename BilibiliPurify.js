@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.1.1
+// @version      1.1.2
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -78,11 +78,22 @@
         'div.recommend_wrap__PccwM',
         //剧播放页大会员广告
         'div.paybar_container__WApBR',
+        //直播首页顶部播放器
+        'div.player-area-ctnr.border-box.p-relative.t-center',
+        //直播首页广告/公告/推荐
+        'div.grid-col-1.grid-col.v-top.dp-i-block',
+        'div.grid-col-3,grid-col,v-top,dp-i-block',
+        'div.flip-view p-relative.over-hidden.w-100',
+        //直播首页推荐直播
+        'div.recommend-area-ctnr',
+        'div.area-detail-ctnr.m-auto',
         //直播页左上入口栏
         'div.nav-items-ctnr.dp-i-block.v-middle',
+        //直播页左上入口栏更多按钮
+        'div.showmore-link.p-relative.f-left',
         //直播页右上入口栏
         'div.shortcuts-ctnr.h-100.f-left',
-        //直播也右上入口栏头像菜单
+        //直播页右上入口栏头像菜单
         'div.user-panel.p-relative.border-box.none-select.panel-shadow',
         //直播页横向礼物栏
         'div.gift-panel.base-panel.live-skin-coloration-area.gift-corner-mark-ui',
@@ -115,6 +126,9 @@
         'i.rank-icon.rank-icon-1.v-middle',
         'i.rank-icon.rank-icon-2.v-middle',
         'i.rank-icon.rank-icon-3.v-middle',
+        'i.top1-rank-icon',
+        'i.top2-rank-icon',
+        'i.top3-rank-icon',
         //直播页大航海
         'div.item.live-skin-normal-text.dp-i-block.live-skin-separate-border.border-box.t-center.pointer.tab-item.opacity6',
         //直播页粉丝团\大航海购买页购买引导
@@ -138,7 +152,9 @@
         'div.title-label.dp-i-block.p-relative.v-middle',
         //直播页聊天框信息提示
         'div.chat-item.common-danmuku-msg.border-box',
-        'div.chat-item.convention-msg.border-box'
+        'div.chat-item.convention-msg.border-box',
+        //直播页播放器顶部移动式横幅广告
+        'div.announcement-wrapper.clearfix.no-select'
     ];
 
     const cssRules = hideSelectors.map(selector =>
@@ -612,5 +628,31 @@
         } else {
             initLiveChatObserver();
         }
+    }
+
+
+    //直播间首页播放器删除
+    function removeVideoOnly() {
+        const observer = new MutationObserver(() => {
+            const playerCtnr = document.querySelector('.player-ctnr.p-relative.over-hidden.dp-i-block.v-top.t-left');
+         if (playerCtnr) {
+              const video = playerCtnr.querySelector('video');
+             if (video) {
+                 video.remove();
+                    console.log('[Bilibili纯粹化] 已删除 video');
+                    observer.disconnect(); // 删除后停止监控
+            }
+        }
+    });
+    
+     observer.observe(document.documentElement, {
+          childList: true,
+          subtree: true
+    });
+    }
+
+    if (window.location.hostname === 'live.bilibili.com' && 
+       window.location.pathname === '/') {
+       removeVideoOnly();
     }
 })();
