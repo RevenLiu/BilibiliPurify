@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.0.2
+// @version      1.1.0
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -16,6 +16,8 @@
 // @match        https://space.bilibili.com/*
 // @match        https://message.bilibili.com/*
 // @match        https://t.bilibili.com/*
+// @match        https://live.bilibili.com/*
+// @match        https://link.bilibili.com/*
 // @grant        GM_addStyle
 // @run-at       document-start
 // ==/UserScript==
@@ -49,6 +51,8 @@
         'div.trending',
         //右上入口栏大会员
         'a.right-entry__outside.right-entry--vip',
+        //右上入口栏头像下拉菜单会员中心
+        'div.vip-entry-containter',
         //左上入口栏杂项
         'a.default-entry',
         //左上入口栏下载客户端按钮
@@ -73,11 +77,71 @@
         //剧播放页推荐列表
         'div.recommend_wrap__PccwM',
         //剧播放页大会员广告
-        'div.paybar_container__WApBR'
+        'div.paybar_container__WApBR',
+        //直播页左上入口栏
+        'div.nav-items-ctnr.dp-i-block.v-middle',
+        //直播页右上入口栏
+        'div.shortcuts-ctnr.h-100.f-left',
+        //直播也右上入口栏头像菜单
+        'div.user-panel.p-relative.border-box.none-select.panel-shadow',
+        //直播页横向礼物栏
+        'div.gift-panel.base-panel.live-skin-coloration-area.gift-corner-mark-ui',
+        //直播页电池立即充值文字
+        'div.recharge-ent-info',
+        //直播页大航海立即上船文字
+        'div.guard-ent-info',
+        //直播页超能理事会图标
+        'div.left-part-ctnr.vertical-middle.dp-table.section.p-relative.adaptive',
+        //直播页横向活动栏
+        'div.activity-gather-entry.activity-entry.s-activity-entry',
+        'div.rank-entry-play.rank-entries.hot-normal-area',
+        //直播页观众列表排名图标
+        'div.rank',
+        //直播页观众列表贡献值
+        'div.score.live-skin-normal-text',
+        //直播页观众列表送礼引导文字'
+        'div.need.live-skin-normal-text.opacity6',
+        'div.switch-box',
+        //直播页观众列表排行榜按钮
+        'div.tab-box',
+        //直播页观众列表粉丝勋章
+        'div.fans-medal.fans-medal-item',
+        //直播页观众列表等级勋章
+        'div.wealth-medal.wealth',
+        //直播页观众列表大航海头像框
+        'div.guard-frame',
+        //直播页观众列表榜前三显示
+        'div.top3.top3-3',
+        'i.rank-icon.rank-icon-1.v-middle',
+        'i.rank-icon.rank-icon-2.v-middle',
+        'i.rank-icon.rank-icon-3.v-middle',
+        //直播页大航海
+        'div.item.live-skin-normal-text.dp-i-block.live-skin-separate-border.border-box.t-center.pointer.tab-item.opacity6',
+        //直播页粉丝团\大航海购买页购买引导
+        'div.right-list.flex.small-right',
+        'div.subtitle.m-b-30.text-12.font-bold.lh-14',
+        'div.h-54.w-full.flex.items-center',
+        'div.right-list.flex',
+        //直播页粉丝团\大航海购买页粉丝团成员榜大航海勋章
+        'div.rights',
+        //直播页粉丝团\大航海购买页粉丝团成员榜排名名次
+        'div.rank-icon',
+        //直播页粉丝团\大航海购买页舰队权益购买引导
+        'div.m-t-16.flex.items-center.justify-center.text-14',
+        //直播页粉丝团\大航海购买页舰队权益大航海图标
+        'div.m-r-5.h-26.w-26.bg-cover',
+        //直播页等级勋章
+        'div.wealth-medal-ctnr.fans-medal-item-target.dp-i-block.p-relative.v-middle',
+        //直播页粉丝勋章
+        'div.fans-medal-item-ctnr.fans-medal-item-target.dp-i-block.p-relative.v-middle',
+        //直播页聊天框装扮
+        'div.title-label.dp-i-block.p-relative.v-middle'
     ];
 
     const cssRules = hideSelectors.map(selector =>
-        `${selector} { display: none !important; }`
+        `${selector} {
+         display: none !important; 
+         }`
     ).join('\n');
 
     // 评论区相关样式
@@ -488,5 +552,62 @@
     //剧播放页评论区锁定
     if (window.location.pathname.includes('/bangumi/')) {
         waitForComment("bangumi");
+    }
+
+    
+    // 直播间聊天框彩色背景移除功能
+    function removeChatBubbleColors() {
+        // 查找所有带彩色背景的聊天项
+        const colorfulChats = document.querySelectorAll('.chat-item.danmaku-item.chat-colorful-bubble.has-bubble');
+        
+        colorfulChats.forEach(chat => {
+            // 移除 style 属性以去掉背景颜色
+            if (chat.hasAttribute('style')) {
+                chat.removeAttribute('style');
+            }
+        });
+    }
+
+    // 监听直播间聊天框的动态变化
+    function initLiveChatObserver() {
+        // 等待聊天框容器加载
+        const checkChatContainer = setInterval(() => {
+            const chatContainer = document.querySelector('#chat-items');
+            
+            if (chatContainer) {
+                clearInterval(checkChatContainer);
+                
+                // 处理已存在的彩色聊天
+                removeChatBubbleColors();
+                
+                // 监听新增的聊天消息
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        if (mutation.addedNodes.length > 0) {
+                            removeChatBubbleColors();
+                        }
+                    });
+                });
+                
+                observer.observe(chatContainer, {
+                    childList: true,
+                    subtree: true
+                });
+                
+                console.log('[Bilibili纯粹化] 直播间彩色聊天背景移除已启用');
+            }
+        }, 500);
+        
+        // 10秒后停止检查（避免无限循环）
+        setTimeout(() => clearInterval(checkChatContainer), 10000);
+    }
+
+    // 直播页启用聊天框背景移除
+    if (window.location.hostname === 'live.bilibili.com') {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initLiveChatObserver);
+        } else {
+            initLiveChatObserver();
+        }
     }
 })();
