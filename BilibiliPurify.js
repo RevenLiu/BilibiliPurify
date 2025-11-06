@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.1.8
+// @version      1.1.9
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -596,13 +596,66 @@
         }
     }
 
-    // 视频页评论区锁定
-    if (window.location.pathname.includes('/video/')) {
-        waitForComment("video");
+    //取消自动连播
+    function autoContinuousOff(){
+        let hasClicked = false; // 防止重复点击
+
+        const observer = new MutationObserver(() => {
+            // 查找自动连播容器
+            const continuousBtn = document.querySelector('.continuous-btn');
+
+            if (continuousBtn) {
+                // 查找开启状态的按钮
+                const switchBtnOn = continuousBtn.querySelector('.switch-btn.on');
+
+                if (switchBtnOn && !hasClicked) {
+                    hasClicked = true;
+                    switchBtnOn.click();
+                    console.log('[Bilibili纯粹化] 尝试关闭自动连播');
+
+                    // 等待 500ms 后检查是否真的关闭了
+                    setTimeout(() => {
+                        const checkBtn = document.querySelector('.continuous-btn .switch-btn');
+                        if (checkBtn && !checkBtn.classList.contains('on')) {
+                            console.log('[Bilibili纯粹化] 自动连播已关闭');
+                            observer.disconnect();
+                        } else {
+                            console.log('[Bilibili纯粹化] 自动连播关闭失败，继续尝试');
+                            hasClicked = false; // 允许再次点击
+                        }
+                    }, 500);
+                } else {
+                    // 检查是否已经是关闭状态
+                    const switchBtn = continuousBtn.querySelector('.switch-btn');
+                    if (switchBtn && !switchBtn.classList.contains('on')) {
+                        console.log('[Bilibili纯粹化] 已经是关闭状态');
+                        observer.disconnect();
+                    }
+                }
+            }
+        });
+
+        // 开始监听 DOM 变化
+        observer.observe(document.documentElement, {
+            childList: true,
+            subtree: true
+        });
+
+        // 10秒后停止检查
+        setTimeout(() => observer.disconnect(), 10000);
     }
 
-    //剧播放页评论区锁定
+    // 视频页相关功能
+    if (window.location.pathname.includes('/video/')) {
+        //评论区锁定
+        waitForComment("video");
+        //关闭自动连播
+        autoContinuousOff();
+    }
+
+    //剧播放页相关功能
     if (window.location.pathname.includes('/bangumi/')) {
+        //评论区锁定
         waitForComment("bangumi");
     }
 
