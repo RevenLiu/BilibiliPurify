@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.2.2
+// @version      1.2.3
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -1304,16 +1304,19 @@ function purifyComments() {
     }
 
     
-    // 直播间聊天框彩色背景移除功能
+    // 直播间聊天框彩色背景/彩色名字移除功能
     function removeChatBubbleColors() {
         // 查找所有带彩色背景的聊天项
-        const colorfulChats = document.querySelectorAll('.chat-item.danmaku-item.chat-colorful-bubble.has-bubble');
+        const colorfulChats = document.querySelectorAll('.chat-item.danmaku-item.has-bubble');
         
         colorfulChats.forEach(chat => {
             // 移除 style 属性以去掉背景颜色
             if (chat.hasAttribute('style')) {
                 chat.removeAttribute('style');
             }
+            //移除用户名字颜色
+            const userNameSpan = chat.querySelector('.user-name');
+            userNameSpan.setAttribute('style', '');
         });
     }
 
