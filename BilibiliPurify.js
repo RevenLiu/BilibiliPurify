@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.1.6
+// @version      1.1.7
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -508,7 +508,7 @@
                 <div id="countdown">3</div>
 
                 <div id="input-area">
-                    <input type="text" id="reflection-input" placeholder="请输入：我保持思考" />
+                    <input type="text" autocomplete="off" id="reflection-input" placeholder="请输入：我保持思考" />
                     <button id="confirm-btn">确认解锁</button>
                     <div id="error-msg"></div>
                 </div>
@@ -726,5 +726,61 @@
         } else {
             modifyBannerClass();
         }
+    }
+
+    // 搜索框推荐关键字修改
+    function modifySearchInput() {
+        // 配置：
+        const searchConfig = {
+            //包含<input>的div
+            containerClasses: [
+                'nav-search-content',
+                'search-input-wrap.flex_between',
+                'p-relative.search-bar.over-hidden.border-box.t-nowrap'
+            ],
+            placeholder: '输入关键字搜索',
+            removeTitle: true
+        };
+
+        // 构建选择器字符串
+        const selectors = searchConfig.containerClasses.map(cls => {
+            const selector = cls.split('.').join('.');
+            return `.${selector} input`;
+        }).join(', ');
+
+        const observer = new MutationObserver(() => {
+            const inputs = document.querySelectorAll(selectors);
+            
+            inputs.forEach(input => {
+                // 修改 placeholder
+                if (input.placeholder !== searchConfig.placeholder) {
+                    input.placeholder = searchConfig.placeholder;
+                    console.log('[Bilibili纯粹化] 已修改搜索框 placeholder');
+                }
+                
+                // 删除 title 属性
+                if (searchConfig.removeTitle && input.hasAttribute('title')) {
+                    input.removeAttribute('title');
+                    console.log('[Bilibili纯粹化] 已删除搜索框 title 属性');
+                }
+            });
+        });
+        
+        // 开始监听
+        observer.observe(document.documentElement, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['placeholder', 'title']
+        });
+        
+        console.log('[Bilibili纯粹化] 搜索框修改功能已启用');
+    }
+
+    // 启用搜索框推荐关键字修改功能
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', modifySearchInput);
+    } else {
+        modifySearchInput();
     }
 })();
