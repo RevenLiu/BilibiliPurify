@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.1.10
+// @version      1.2.0
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -80,6 +80,17 @@
         'div.recommend_wrap__PccwM',
         //剧播放页大会员广告
         'div.paybar_container__WApBR',
+        //剧播放页右侧大会员购买广告
+        '#pc-cashier-wrapper-normal',
+        'div.paybar_container__WApBR',
+        //剧播放页播放器大会员购买广告
+        '#pc-cashier-wrapper-video',
+        //剧播放页播放器大会员广告弹窗
+        'div.bpx-player-toast-wrap',
+        //剧播放页播放器试看结束购买引导
+        'div.paywall_vipRightWrap__U6Tw3',
+        'div.paywall_btnItemWrap__s351D.paywall_bigBtn__6S6pz',
+        'div.paywall_rightBox__pFhO_',
         //直播首页顶部播放器
         'div.player-area-ctnr.border-box.p-relative.t-center',
         //直播首页广告/公告/推荐
@@ -457,6 +468,615 @@
 
     console.log('[Bilibili纯粹化] 样式已注入');
 
+
+// 评论区净化功能 - 移除超链接、点赞数、UP主点赞标识、用户装饰
+function purifyComments() {
+    //console.log('[Bilibili纯粹化-调试] purifyComments 函数被调用');
+    
+    let processedCount = {
+        searchLinks: 0,
+        likeCounts: 0,
+        upTags: 0,
+        userStyles: 0,
+        userLevels: 0,
+        sailingCards: 0,
+        avatarLayers: 0
+    };
+    
+    // 存储所有观察器
+    const observers = new Set();
+    
+    // 处理评论中的搜索关键词超链接
+    function processSearchLinks(richText) {
+        if (!richText || !richText.shadowRoot) return;
+        
+        const contents = richText.shadowRoot.querySelector('#contents');
+        if (!contents) return;
+        
+        const searchLinks = contents.querySelectorAll('a[data-type="search"]');
+        
+        searchLinks.forEach(link => {
+            const span = document.createElement('span');
+            span.textContent = link.textContent;
+            span.className = link.className;
+            link.parentNode.replaceChild(span, link);
+            //processedCount.searchLinks++;
+            
+            const img = span.querySelector('img');
+            if (img) {
+                img.style.display = 'none';
+            }
+        });
+    }
+    
+    // 隐藏点赞数量
+    function hideLikeCount(actionButtons) {
+        if (!actionButtons || !actionButtons.shadowRoot) return;
+        
+        const likeDiv = actionButtons.shadowRoot.querySelector('#like');
+        if (!likeDiv) return;
+        
+        const countSpan = likeDiv.querySelector('button #count');
+        if (countSpan) {
+            countSpan.style.display = 'none';
+            //processedCount.likeCounts++;
+        }
+    }
+    
+    // 隐藏UP主点赞标识
+    function hideUpLikeTags(mainDiv) {
+        if (!mainDiv) return;
+        
+        const tagsDiv = mainDiv.querySelector('#tags');
+        if (tagsDiv) {
+            tagsDiv.style.display = 'none';
+            //processedCount.upTags++;
+        }
+    }
+    
+    // 净化用户信息（移除用户名样式、隐藏等级）
+    function purifyUserInfo(userInfo) {
+        if (!userInfo || !userInfo.shadowRoot) return;
+        
+        const infoDiv = userInfo.shadowRoot.querySelector('#info');
+        if (!infoDiv) return;
+        
+        // 移除用户名的 style 属性
+        const userNameDiv = infoDiv.querySelector('#user-name');
+        if (userNameDiv) {
+            const userNameLink = userNameDiv.querySelector('a');
+            if (userNameLink && userNameLink.hasAttribute('style')) {
+                userNameLink.removeAttribute('style');
+                //processedCount.userStyles++;
+            }
+        }
+        
+        // 隐藏用户等级
+        const userLevelDiv = infoDiv.querySelector('#user-level');
+        if (userLevelDiv && userLevelDiv.style.display !== 'none') {
+            userLevelDiv.style.display = 'none';
+            //processedCount.userLevels++;
+        }
+    }
+    
+    // 隐藏用户装扮卡片
+    function removeSailingCard(header) {
+        if (!header) return;
+        const sailingCard = header.querySelector('bili-comment-user-sailing-card');
+        if (sailingCard) {
+            sailingCard.style.display = 'none';
+            //processedCount.sailingCards++;
+        }
+    }
+    
+    // 隐藏头像装饰层
+    function hideAvatarLayers(avatar) {
+        if (!avatar || !avatar.shadowRoot) return;
+        
+        const canvasDiv = avatar.shadowRoot.querySelector('#canvas');
+        if (!canvasDiv) return;
+        
+        // 隐藏 class="layer" 的 div
+        const layers = canvasDiv.querySelectorAll('.layer');
+        layers.forEach(layer => {
+            if(!layer.classList.contains('center')){
+                if (layer.style.display !== 'none') {
+                layer.style.display = 'none';
+                //processedCount.avatarLayers++;
+            }
+            }
+        });
+        
+        // 隐藏 class="layer-res" 且没有 style 属性的 div
+        const layerRes = canvasDiv.querySelectorAll('.layer-res');
+        layerRes.forEach(res => {
+            if (!res.hasAttribute('style') && res.style.display !== 'none') {
+                res.style.display = 'none';
+                //processedCount.avatarLayers++;
+            }
+        });
+    }
+    
+    // 处理用户头像
+    function processUserAvatar(bodyDiv) {
+        if (!bodyDiv) return;
+        
+        const avatarLink = bodyDiv.querySelector('#user-avatar');
+        if (!avatarLink) return;
+        
+        const avatar = avatarLink.querySelector('bili-avatar');
+        if (avatar) {
+            hideAvatarLayers(avatar);
+            
+            // 监听 avatar 的 shadowRoot
+            if (avatar.shadowRoot) {
+                observeShadowRoot(avatar.shadowRoot, () => {
+                    hideAvatarLayers(avatar);
+                });
+            }
+        }
+    }
+    
+    // 为 Shadow Root 设置观察器
+    function observeShadowRoot(shadowRoot, callback) {
+        if (!shadowRoot) return null;
+        
+        const observer = new MutationObserver(callback);
+        observer.observe(shadowRoot, {
+            childList: true,
+            subtree: true,
+            attributes: true
+        });
+        
+        observers.add(observer);
+        return observer;
+    }
+    
+    // 处理单个评论
+    function processComment(commentRenderer) {
+        if (!commentRenderer || !commentRenderer.shadowRoot) return;
+        
+        // 监听 commentRenderer 的 shadowRoot
+        observeShadowRoot(commentRenderer.shadowRoot, () => {
+            const body = commentRenderer.shadowRoot.querySelector('#body');
+            if (!body) return;
+            
+            const main = body.querySelector('#main');
+            if (!main) return;
+            
+            // 处理评论内容
+            const content = main.querySelector('#content');
+            if (content) {
+                const richText = content.querySelector('bili-rich-text');
+                processSearchLinks(richText);
+                
+                // 监听 richText 的 shadowRoot
+                if (richText && richText.shadowRoot) {
+                    observeShadowRoot(richText.shadowRoot, () => {
+                        processSearchLinks(richText);
+                    });
+                }
+            }
+            
+            // 处理用户信息
+            const header = main.querySelector('#header');
+            if (header) {
+                const userInfo = header.querySelector('bili-comment-user-info');
+                if (userInfo) {
+                    purifyUserInfo(userInfo);
+                    removeSailingCard(header);
+                    
+                    // 监听 userInfo 的 shadowRoot
+                    if (userInfo.shadowRoot) {
+                        observeShadowRoot(userInfo.shadowRoot, () => {
+                            purifyUserInfo(userInfo);
+                        });
+                    }
+                }
+            }
+            
+            // 处理用户头像
+            processUserAvatar(body);
+            
+            const footer = main.querySelector('#footer');
+            if (footer) {
+                const actionButtons = footer.querySelector('bili-comment-action-buttons-renderer');
+                hideLikeCount(actionButtons);
+                
+                // 监听 actionButtons 的 shadowRoot
+                if (actionButtons && actionButtons.shadowRoot) {
+                    observeShadowRoot(actionButtons.shadowRoot, () => {
+                        hideLikeCount(actionButtons);
+                    });
+                }
+            }
+            
+            hideUpLikeTags(main);
+        });
+        
+        // 立即执行一次处理
+        const body = commentRenderer.shadowRoot.querySelector('#body');
+        if (!body) return;
+        
+        const main = body.querySelector('#main');
+        if (!main) return;
+        
+        const content = main.querySelector('#content');
+        if (content) {
+            const richText = content.querySelector('bili-rich-text');
+            processSearchLinks(richText);
+            
+            if (richText && richText.shadowRoot) {
+                observeShadowRoot(richText.shadowRoot, () => {
+                    processSearchLinks(richText);
+                });
+            }
+        }
+        
+        const header = main.querySelector('#header');
+        if (header) {
+            const userInfo = header.querySelector('bili-comment-user-info');
+            if (userInfo) {
+                purifyUserInfo(userInfo);
+                removeSailingCard(header);
+                
+                if (userInfo.shadowRoot) {
+                    observeShadowRoot(userInfo.shadowRoot, () => {
+                        purifyUserInfo(userInfo);
+                    });
+                }
+            }
+        }
+        
+        processUserAvatar(body);
+        
+        const footer = main.querySelector('#footer');
+        if (footer) {
+            const actionButtons = footer.querySelector('bili-comment-action-buttons-renderer');
+            hideLikeCount(actionButtons);
+            
+            if (actionButtons && actionButtons.shadowRoot) {
+                observeShadowRoot(actionButtons.shadowRoot, () => {
+                    hideLikeCount(actionButtons);
+                });
+            }
+        }
+        
+        hideUpLikeTags(main);
+    }
+    
+    // 处理楼中楼回复
+    function processReplies(repliesRenderer) {
+        if (!repliesRenderer || !repliesRenderer.shadowRoot) return;
+        
+        // 监听 repliesRenderer 的 shadowRoot
+        observeShadowRoot(repliesRenderer.shadowRoot, () => {
+            const expander = repliesRenderer.shadowRoot.querySelector('#expander');
+            if (!expander) return;
+            
+            const expanderContents = expander.querySelector('#expander-contents');
+            if (!expanderContents) return;
+            
+            const replyRenderers = expanderContents.querySelectorAll('bili-comment-reply-renderer');
+            
+            replyRenderers.forEach(replyRenderer => {
+                if (!replyRenderer.shadowRoot) return;
+                
+                // 监听每个 replyRenderer 的 shadowRoot
+                observeShadowRoot(replyRenderer.shadowRoot, () => {
+                    const body = replyRenderer.shadowRoot.querySelector('#body');
+                    if (!body) return;
+                    
+                    const main = body.querySelector('#main');
+                    if (!main) return;
+                    
+                    const richText = main.querySelector('bili-rich-text');
+                    processSearchLinks(richText);
+                    
+                    if (richText && richText.shadowRoot) {
+                        observeShadowRoot(richText.shadowRoot, () => {
+                            processSearchLinks(richText);
+                        });
+                    }
+                    
+                    // 处理楼中楼的用户信息
+                    const userInfo = main.querySelector('bili-comment-user-info');
+                    if (userInfo) {
+                        purifyUserInfo(userInfo);
+                        
+                        if (userInfo.shadowRoot) {
+                            observeShadowRoot(userInfo.shadowRoot, () => {
+                                purifyUserInfo(userInfo);
+                            });
+                        }
+                    }
+                    
+                    const footer = body.querySelector('#footer');
+                    if (footer) {
+                        const actionButtons = footer.querySelector('bili-comment-action-buttons-renderer');
+                        hideLikeCount(actionButtons);
+                        
+                        if (actionButtons && actionButtons.shadowRoot) {
+                            observeShadowRoot(actionButtons.shadowRoot, () => {
+                                hideLikeCount(actionButtons);
+                            });
+                        }
+                    }
+                });
+                
+                // 立即执行一次处理
+                const body = replyRenderer.shadowRoot.querySelector('#body');
+                if (!body) return;
+                
+                const main = body.querySelector('#main');
+                if (!main) return;
+                
+                const richText = main.querySelector('bili-rich-text');
+                processSearchLinks(richText);
+                
+                if (richText && richText.shadowRoot) {
+                    observeShadowRoot(richText.shadowRoot, () => {
+                        processSearchLinks(richText);
+                    });
+                }
+                
+                const userInfo = main.querySelector('bili-comment-user-info');
+                if (userInfo) {
+                    purifyUserInfo(userInfo);
+                    
+                    if (userInfo.shadowRoot) {
+                        observeShadowRoot(userInfo.shadowRoot, () => {
+                            purifyUserInfo(userInfo);
+                        });
+                    }
+                }
+                
+                const footer = body.querySelector('#footer');
+                if (footer) {
+                    const actionButtons = footer.querySelector('bili-comment-action-buttons-renderer');
+                    hideLikeCount(actionButtons);
+                    
+                    if (actionButtons && actionButtons.shadowRoot) {
+                        observeShadowRoot(actionButtons.shadowRoot, () => {
+                            hideLikeCount(actionButtons);
+                        });
+                    }
+                }
+            });
+        });
+        
+        // 立即执行一次处理
+        const expander = repliesRenderer.shadowRoot.querySelector('#expander');
+        if (!expander) return;
+        
+        const expanderContents = expander.querySelector('#expander-contents');
+        if (!expanderContents) return;
+        
+        const replyRenderers = expanderContents.querySelectorAll('bili-comment-reply-renderer');
+        
+        replyRenderers.forEach(replyRenderer => {
+            if (!replyRenderer.shadowRoot) return;
+            
+            observeShadowRoot(replyRenderer.shadowRoot, () => {
+                const body = replyRenderer.shadowRoot.querySelector('#body');
+                if (!body) return;
+                
+                const main = body.querySelector('#main');
+                if (!main) return;
+                
+                const richText = main.querySelector('bili-rich-text');
+                processSearchLinks(richText);
+                
+                if (richText && richText.shadowRoot) {
+                    observeShadowRoot(richText.shadowRoot, () => {
+                        processSearchLinks(richText);
+                    });
+                }
+                
+                const userInfo = main.querySelector('bili-comment-user-info');
+                if (userInfo) {
+                    purifyUserInfo(userInfo);
+                    
+                    if (userInfo.shadowRoot) {
+                        observeShadowRoot(userInfo.shadowRoot, () => {
+                            purifyUserInfo(userInfo);
+                        });
+                    }
+                }
+                
+                const footer = body.querySelector('#footer');
+                if (footer) {
+                    const actionButtons = footer.querySelector('bili-comment-action-buttons-renderer');
+                    hideLikeCount(actionButtons);
+                    
+                    if (actionButtons && actionButtons.shadowRoot) {
+                        observeShadowRoot(actionButtons.shadowRoot, () => {
+                            hideLikeCount(actionButtons);
+                        });
+                    }
+                }
+            });
+            
+            const body = replyRenderer.shadowRoot.querySelector('#body');
+            if (!body) return;
+            
+            const main = body.querySelector('#main');
+            if (!main) return;
+            
+            const richText = main.querySelector('bili-rich-text');
+            processSearchLinks(richText);
+            
+            if (richText && richText.shadowRoot) {
+                observeShadowRoot(richText.shadowRoot, () => {
+                    processSearchLinks(richText);
+                });
+            }
+            
+            const userInfo = main.querySelector('bili-comment-user-info');
+            if (userInfo) {
+                purifyUserInfo(userInfo);
+                
+                if (userInfo.shadowRoot) {
+                    observeShadowRoot(userInfo.shadowRoot, () => {
+                        purifyUserInfo(userInfo);
+                    });
+                }
+            }
+            
+            const footer = body.querySelector('#footer');
+            if (footer) {
+                const actionButtons = footer.querySelector('bili-comment-action-buttons-renderer');
+                hideLikeCount(actionButtons);
+                
+                if (actionButtons && actionButtons.shadowRoot) {
+                    observeShadowRoot(actionButtons.shadowRoot, () => {
+                        hideLikeCount(actionButtons);
+                    });
+                }
+            }
+        });
+    }
+    
+    // 处理所有评论线程
+    function processAllComments() {
+        const biliComments = document.querySelector('bili-comments');
+        if (!biliComments || !biliComments.shadowRoot) return false;
+        
+        const contents = biliComments.shadowRoot.querySelector('#contents');
+        if (!contents) return false;
+        
+        const feed = contents.querySelector('#feed');
+        if (!feed) return false;
+        
+        const threads = feed.querySelectorAll('bili-comment-thread-renderer');
+        
+        threads.forEach((thread, index) => {
+            if (!thread.shadowRoot) return;
+            
+            // 监听每个 thread 的 shadowRoot
+            observeShadowRoot(thread.shadowRoot, () => {
+                const commentRenderer = thread.shadowRoot.querySelector('bili-comment-renderer');
+                if (commentRenderer) {
+                    processComment(commentRenderer);
+                }
+                
+                const replies = thread.shadowRoot.querySelector('#replies');
+                if (replies) {
+                    const repliesRenderer = replies.querySelector('bili-comment-replies-renderer');
+                    if (repliesRenderer) {
+                        processReplies(repliesRenderer);
+                    }
+                }
+            });
+            
+            // 立即执行一次处理
+            const commentRenderer = thread.shadowRoot.querySelector('bili-comment-renderer');
+            if (commentRenderer) {
+                processComment(commentRenderer);
+            }
+            
+            const replies = thread.shadowRoot.querySelector('#replies');
+            if (replies) {
+                const repliesRenderer = replies.querySelector('bili-comment-replies-renderer');
+                if (repliesRenderer) {
+                    processReplies(repliesRenderer);
+                }
+            }
+        });
+        
+        // if (processedCount.searchLinks > 0 || processedCount.likeCounts > 0 || processedCount.upTags > 0 || 
+        //     processedCount.userStyles > 0 || processedCount.userLevels > 0 || processedCount.sailingCards > 0 || 
+        //     processedCount.avatarLayers > 0) {
+        //     console.log(`[Bilibili纯粹化-调试] 本次处理完成 - 搜索链接: ${processedCount.searchLinks}, 点赞数: ${processedCount.likeCounts}, UP标识: ${processedCount.upTags}, 用户名样式: ${processedCount.userStyles}, 用户等级: ${processedCount.userLevels}, 装扮卡片: ${processedCount.sailingCards}, 头像装饰: ${processedCount.avatarLayers}`);
+        // }
+        
+        // processedCount = {
+        //     searchLinks: 0,
+        //     likeCounts: 0,
+        //     upTags: 0,
+        //     userStyles: 0,
+        //     userLevels: 0,
+        //     sailingCards: 0,
+        //     avatarLayers: 0
+        // };
+        
+        return true;
+    }
+    
+    // 监听评论区变化
+    function observeComments(retryCount = 0) {
+        const maxRetries = 20;
+        
+        const biliComments = document.querySelector('bili-comments');
+        if (!biliComments) {
+            if (retryCount < maxRetries) {
+                setTimeout(() => observeComments(retryCount + 1), 500);
+            }
+            return;
+        }
+        
+        if (!biliComments.shadowRoot) {
+            if (retryCount < maxRetries) {
+                setTimeout(() => observeComments(retryCount + 1), 500);
+            }
+            return;
+        }
+        
+        // 监听 biliComments 的 shadowRoot
+        observeShadowRoot(biliComments.shadowRoot, () => {
+            processAllComments();
+        });
+        
+        function waitForContents(contentRetryCount = 0) {
+            const maxContentRetries = 20;
+            
+            const contents = biliComments.shadowRoot.querySelector('#contents');
+            if (!contents) {
+                if (contentRetryCount < maxContentRetries) {
+                    setTimeout(() => waitForContents(contentRetryCount + 1), 500);
+                }
+                return;
+            }
+            
+            // 监听 contents
+            observeShadowRoot(contents, () => {
+                processAllComments();
+            });
+            
+            function waitForFeed(feedRetryCount = 0) {
+                const maxFeedRetries = 20;
+                
+                const feed = contents.querySelector('#feed');
+                if (!feed) {
+                    if (feedRetryCount < maxFeedRetries) {
+                        setTimeout(() => waitForFeed(feedRetryCount + 1), 500);
+                    }
+                    return;
+                }
+                
+                //console.log('[Bilibili纯粹化-调试] #feed 已找到,开始初始处理和监听');
+                
+                // 监听 feed
+                observeShadowRoot(feed, () => {
+                    processAllComments();
+                });
+                
+                // 初始处理
+                processAllComments();
+                
+                console.log('[Bilibili纯粹化] 评论区净化功能已启用');
+            }
+            
+            waitForFeed();
+        }
+        
+        waitForContents();
+    }
+    
+    observeComments();
+}
+
+
     // 评论区锁定功能
     function initCommentLock(pageType) {
         var commentApp;
@@ -653,12 +1273,16 @@
         waitForComment("video");
         //关闭自动连播
         autoContinuousOff();
+        //评论区净化
+        purifyComments();
     }
 
     //剧播放页相关功能
     if (window.location.pathname.includes('/bangumi/')) {
         //评论区锁定
         waitForComment("bangumi");
+        //评论区净化
+        purifyComments();
     }
 
     
