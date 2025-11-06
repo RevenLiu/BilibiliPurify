@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.2.1
+// @version      1.2.2
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -582,7 +582,7 @@ function purifyComments() {
         const canvasDiv = avatar.shadowRoot.querySelector('#canvas');
         if (!canvasDiv) return;
         
-        // 隐藏 class="layer" 的 div
+        // 隐藏 class="layer" 的 div (大会员标志)
         const layers = canvasDiv.querySelectorAll('.layer');
         layers.forEach(layer => {
             if(!layer.classList.contains('center')){
@@ -593,7 +593,7 @@ function purifyComments() {
             }
         });
         
-        // 隐藏 class="layer-res" 且没有 style 属性的 div
+        // 隐藏 class="layer-res" 且没有 style 属性的 div，并隐藏其他layer-res的style (头像框)
         const layerRes = canvasDiv.querySelectorAll('.layer-res');
         layerRes.forEach(res => {
             if (!res.hasAttribute('style') && res.style.display !== 'none') {
@@ -601,6 +601,18 @@ function purifyComments() {
                 //processedCount.avatarLayers++;
             }
         });
+
+        //另一种头像框 在隐藏头像框的同时统一头像大小 (可能是动态头像框?)
+        const layerCenter = canvasDiv.querySelectorAll('.layer.center');
+        layerCenter.forEach(layer => {
+            if(layer.style.width == '66px'){
+                layer.style.display = 'none';
+            }else if(layer.style.width !== '48px'){
+                layer.style.width = '48px';
+                layer.style.height = '48px';
+            }
+        })
+
     }
     
     // 处理用户头像
