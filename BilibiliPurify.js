@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.2.3
+// @version      1.2.4
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -150,6 +150,12 @@
         'div.subtitle.m-b-30.text-12.font-bold.lh-14',
         'div.h-54.w-full.flex.items-center',
         'div.right-list.flex',
+        'div.medal',
+        'div.fans-equity',
+        'div.m-b-50.m-t-30.h-22.flex.flex-row.items-center.border-rd-11.p-l-4.p-r-6',
+        'div.relation-rights-wrapper.relative.m-auto.box-border.max-w-423.border-rd-12.bg-white.p-12.p-t-20.relative.z-2.m-b-10',
+        'div.guard-bonus-wrapper.m-auto.m-b-12.box-border.max-w-423.border-rd-12.bg-white.p-12.p-t-20',
+        'div.platform-rights-wrapper.m-auto.box-border.max-w-423.border-rd-12.bg-white.p-12.p-b-0.p-t-20',
         //直播页粉丝团\大航海购买页粉丝团成员榜大航海勋章
         'div.rights',
         //直播页粉丝团\大航海购买页粉丝团成员榜排名名次
@@ -196,6 +202,8 @@
         'div.flip-view.p-relative.over-hidden.w-100',
         //直播页主播心愿提示
         'div.gift-wish-card-root',
+        //直播页互动指令窗口
+        '#game-id',
         //直播分区页大型横向广告
         'div.banner-ctn',
         //直播分区页横幅广告
@@ -1485,4 +1493,67 @@ function purifyComments() {
     } else {
         modifySearchInput();
     }
+
+    // 隐藏搜索页广告视频功能
+    function removeSearchPageAdVideo() {
+        const hiddenVideos = new Set(); // 记录已隐藏的视频，避免重复处理
+    
+        // 隐藏广告视频
+        function hideAdVideos(container) {
+           if (!container) return;
+        
+          const videos = container.querySelectorAll(':scope > *');
+         videos.forEach(video => {
+                // 如果已经处理过，跳过
+            if (hiddenVideos.has(video)) return;
+            
+            const adFeedbackEntry = video.querySelector('.ad-feedback-entry');
+            if (adFeedbackEntry) {
+                video.style.display = 'none';
+                hiddenVideos.add(video); // 标记为已处理
+                console.log('[Bilibili纯粹化] 已隐藏一个广告视频');
+            }
+        });
+    }
+    
+    // 监听页面变化
+    function setupObserver() {
+        const observer = new MutationObserver(() => {
+            const videoList = document.querySelector('.video-list');
+            if (videoList) {
+                hideAdVideos(videoList);
+            }
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+        
+        console.log('[Bilibili纯粹化] 搜索页广告视频隐藏功能已启用');
+    }
+    
+    // 等待初始加载
+    function init() {
+        const videoList = document.querySelector('.video-list');
+        
+        if (videoList) {
+            hideAdVideos(videoList);
+            setupObserver();
+        } else {
+            setTimeout(init, 500);
+        }
+    }
+    
+    init();
+    }
+    //启用搜索页广告视频功能
+    if (window.location.hostname === 'search.bilibili.com') {
+       if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', removeSearchPageAdVideo);
+     } else {
+            removeSearchPageAdVideo();
+     }
+    }
+
 })();
