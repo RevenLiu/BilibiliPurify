@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.2.5
+// @version      1.2.6
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -200,6 +200,10 @@
         'div.web-player-ending-panel-recommendList',
         //直播页播放器上贴纸
         'div.sticker-item',
+        //直播页弹幕图标
+        'img.bili-danmaku-x-icon',
+        //直播页弹幕连击
+        'div.combo-danmaku',
         //直播页中心横向广告
         'div.flip-view.p-relative.over-hidden.w-100',
         //直播页主播心愿提示
@@ -477,6 +481,13 @@
     GM_addStyle(cssRules + commentStyles);
 
     console.log('[Bilibili纯粹化] 样式已注入');
+
+    // 辅助函数 - 获取范围内随机整数
+    function getRandomInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
 
 
 // 评论区净化功能 - 移除超链接、点赞数、UP主点赞标识、用户装饰
@@ -1314,8 +1325,8 @@ function purifyComments() {
     }
 
     
-    // 直播间聊天框彩色背景/彩色名字移除功能
-    function removeChatBubbleColors() {
+    // 直播间聊天框彩色背景/彩色名字/彩色名字/特殊弹幕移除功能
+    function removeChatColors() {
         // 查找所有带彩色背景的聊天项
         const colorfulChats = document.querySelectorAll('.chat-item.danmaku-item.has-bubble');
         
@@ -1324,10 +1335,63 @@ function purifyComments() {
             if (chat.hasAttribute('style')) {
                 chat.removeAttribute('style');
             }
-            //移除用户名字颜色
-            const userNameSpan = chat.querySelector('.user-name');
-            userNameSpan.setAttribute('style', '');
         });
+
+        //移除用户名字颜色
+        const userNames = document.querySelectorAll('span.user-name.v-middle.pointer.open-menu');
+        userNames.forEach(name => {
+            if(name.style.color !== '#ffffff'){
+                name.setAttribute('style', '');
+            }
+        })
+
+
+
+    //修改特殊弹幕
+    const regularDanmakuClassname = 'bili-danmaku-x-dm bili-danmaku-x-roll bili-danmaku-x-show';
+    // 标准弹幕style
+    const regularDanmakuStyle = `--opacity: 1; --fontSize: 25px; --fontFamily: SimHei, "Microsoft JhengHei", Arial, Helvetica, sans-serif; --fontWeight: bold; --color: #ffffff; --textShadow: 1px 0 1px #000000,0 1px 1px #000000,0 -1px 1px #000000,-1px 0 1px #000000; --display: none; --offset: 1275px; --translateX: -1387px; --duration: 9.5s; --top: 0px;`;
+    const whiteColorHex = '#ffffff';
+    const MAX_TOP_PIXELS = 200; // 特殊弹幕替换滚动顶部随机距离范围上限
+    const MIN_TOP_PIXELS = 0;   // 特殊弹幕替换滚动顶部随机距离范围下限
+    // 所有不需要处理（非特殊弹幕）的类名集合
+    const standardClassnames = new Set([
+        regularDanmakuClassname,
+        'bili-danmaku-x-dm bili-danmaku-x-roll',    // preparingDanmakuClassname
+        'bili-danmaku-x-dm',                       // offScreenDanmakuClassname
+        'bili-danmaku-x-dm-rotate',                // danmakuRotateClassname
+        'bilibili-combo-danmaku-container'         // comboDanmakucontainerClassname
+    ]);
+
+    const danmakuContainer = document.querySelector('.danmaku-item-container');
+    if (!danmakuContainer) return;
+
+    const danmakus = danmakuContainer.childNodes;
+
+    danmakus.forEach(danmaku => {
+        if (danmaku.nodeType !== 1 || !danmaku.style) return; 
+
+        const currentClassName = danmaku.className;
+        const isStandardClass = standardClassnames.has(currentClassName);
+        const currentColor = danmaku.style.getPropertyValue('--color').trim();
+
+        //修改非白色弹幕的颜色
+        if (isStandardClass && currentColor !== whiteColorHex) {
+            //console.log(`[Bilibili纯粹化-调试] [滚动非白色弹幕] ${danmaku.textContent}, 类名:${currentClassName}, 颜色:${currentColor}`);
+            // 修改颜色
+            danmaku.style.setProperty('--color', whiteColorHex);
+        }
+
+        //修改非滚动弹幕的类型
+        if (!isStandardClass) {
+            //console.log(`[Bilibili纯粹化-调试] [非滚动弹幕] ${danmaku.textContent}, 原始类名:${currentClassName}, 颜色:${currentColor}`);
+            // 修改类名并给予随机顶部距离
+            danmaku.className = regularDanmakuClassname;
+            danmaku.setAttribute('style',regularDanmakuStyle);
+           const randomTop = getRandomInt(MIN_TOP_PIXELS, MAX_TOP_PIXELS);
+            danmaku.style.setProperty('--top', `${randomTop}px`);
+        }
+    });
     }
 
     // 监听直播间聊天框的动态变化
@@ -1339,14 +1403,14 @@ function purifyComments() {
             if (chatContainer) {
                 clearInterval(checkChatContainer);
                 
-                // 处理已存在的彩色聊天
-                removeChatBubbleColors();
+                // 处理已存在的彩色背景/彩色名字/彩色名字/特殊弹幕
+                removeChatColors();
                 
                 // 监听新增的聊天消息
                 const observer = new MutationObserver((mutations) => {
                     mutations.forEach((mutation) => {
                         if (mutation.addedNodes.length > 0) {
-                            removeChatBubbleColors();
+                            removeChatColors();
                         }
                     });
                 });
@@ -1356,7 +1420,7 @@ function purifyComments() {
                     subtree: true
                 });
                 
-                console.log('[Bilibili纯粹化] 直播间彩色聊天背景移除已启用');
+                console.log('[Bilibili纯粹化] 直播间聊天净化已启用');
             }
         }, 500);
         
@@ -1364,7 +1428,7 @@ function purifyComments() {
         setTimeout(() => clearInterval(checkChatContainer), 10000);
     }
 
-    // 直播页启用聊天框背景移除
+    // 直播页启用聊天净化
     if (window.location.hostname === 'live.bilibili.com') {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initLiveChatObserver);
