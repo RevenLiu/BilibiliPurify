@@ -21,12 +21,15 @@
 - 隐藏了直播页当中绝大部分的可被用于引导消费、心理暗示、群体认同感操控的内容，以及会影响体验的礼物、广告等内容。
   如等级图标、特殊的聊天背景颜色等。
 
+- 默认模糊搜索页中的视频封面，仅在主动选择时才显示。
+  限制封面的第一视觉引诱。
+
 ## 🔍 安装方式
 - 安装 [Tampermonkey 插件](https://www.tampermonkey.net/)
 - 点击此处[安装脚本](https://greasyfork.org/zh-CN/scripts/554780-bilibili-purify) 或 [下载](./BilibiliPurify.js)并手动导入
 
-## 开源许可证
+## 📕 开源许可证
 [MIT License](./LICENSE)
 
-## 反馈或建议
+## 🤔 反馈或建议
 欢迎提交 [Issue](https://github.com/RevenLiu/BilibiliPurify/issues)
