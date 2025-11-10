@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.2.7
+// @version      1.3.0
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -53,6 +53,8 @@
         //'div.video-pod.video-pod',
         //热搜
         'div.trending',
+        //搜索页封面播放器
+        'div.v-inline-player',
         //右上入口栏大会员
         'a.right-entry__outside.right-entry--vip',
         //右上入口栏头像下拉菜单会员中心
@@ -479,6 +481,48 @@
             25% { transform: translateX(-5px); }
             75% { transform: translateX(5px); }
         }
+
+        /* 搜索页视频封面遮罩层 */
+        .search-cover__mask {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.01);
+            /* ↓修改这个来调节模糊度↓ */
+            backdrop-filter: blur(10px);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            transition: opacity 0.2s;
+            will-change: transform;
+        }
+
+        /* 搜索页视频封面显示按钮 */
+        .search-cover__button {
+            padding: 8px 16px;
+            background: #00aeec;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.2s, background 0.2s;
+            pointer-events: auto;
+        }
+
+        .search-cover__button.visible {
+            opacity: 1;
+        }
+
+        .search-cover__button.mouse-in {
+            background: #40c5f1;
+        }
+        
     `;
 
     
@@ -1565,17 +1609,19 @@ function purifyComments() {
         modifySearchInput();
     }
 
-    // 隐藏搜索页广告视频功能
+    // 隐藏搜索页广告视频 + 模糊视频封面功能
     function removeSearchPageAdVideo() {
-        const hiddenVideos = new Set(); // 记录已隐藏的视频，避免重复处理
-    
-        // 隐藏广告视频
-        function hideAdVideos(container) {
-           if (!container) return;
+        const hiddenVideos = new Set(); // 记录已隐藏的视频
+        const blurredCovers = new Set(); // 记录已添加模糊遮罩的封面
+        const unblurredCovers = new Set(); // 记录用户已手动显示的封面
+
+    // 隐藏广告视频
+    function hideAdVideos(container) {
+        if (!container) return;
         
-          const videos = container.querySelectorAll(':scope > *');
-         videos.forEach(video => {
-                // 如果已经处理过，跳过
+        const videos = container.querySelectorAll(':scope > *');
+        videos.forEach(video => {
+            // 如果已经处理过，跳过
             if (hiddenVideos.has(video)) return;
             
             const adFeedbackEntry = video.querySelector('.ad-feedback-entry');
@@ -1586,14 +1632,77 @@ function purifyComments() {
             }
         });
     }
-    
+
+    // 为视频封面添加模糊遮罩
+    function addBlurMask(container) {
+        if (!container) return;
+
+        const imageWraps = container.querySelectorAll('.bili-video-card__image--wrap');
+        imageWraps.forEach(wrap => {
+            // 如果已经处理过，或者用户已手动显示过，跳过
+            if (blurredCovers.has(wrap) || unblurredCovers.has(wrap)) return;
+
+            const picture = wrap.querySelector('.v-img.bili-video-card__cover');
+            if (!picture) return;
+
+            // 创建模糊遮罩层
+            const searchPageCoverBlurMask = document.createElement('div');
+            searchPageCoverBlurMask.className = 'search-cover__mask';
+
+            // 创建显示按钮
+            const searchPageCoverShowButton = document.createElement('button');
+            searchPageCoverShowButton.textContent = '显示封面';
+            searchPageCoverShowButton.className = 'search-cover__button'
+
+            // 鼠标悬停效果
+            searchPageCoverBlurMask.addEventListener('mouseenter', () => {
+                searchPageCoverShowButton.classList.add('visible');
+            });
+
+            searchPageCoverBlurMask.addEventListener('mouseleave', () => {
+                searchPageCoverShowButton.classList.remove('visible');
+            });
+
+            // 按钮悬停效果
+            searchPageCoverShowButton.addEventListener('mouseenter', () => {
+                searchPageCoverShowButton.classList.add('mouse-in');
+            });
+
+            searchPageCoverShowButton.addEventListener('mouseleave', () => {
+                searchPageCoverShowButton.classList.remove('mouse-in');
+            });
+
+            // 点击按钮移除模糊层
+            searchPageCoverShowButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                searchPageCoverBlurMask.remove();
+                blurredCovers.delete(wrap); // 从已模糊记录中移除
+                unblurredCovers.add(wrap); // 添加到已显示记录，防止再次添加遮罩
+                // console.log('[Bilibili纯粹化] 已显示一个视频封面');
+            });
+
+            searchPageCoverBlurMask.appendChild(searchPageCoverShowButton);
+
+            // 确保 wrap 元素有相对定位
+            if (getComputedStyle(wrap).position === 'static') {
+                wrap.style.position = 'relative';
+            }
+
+            wrap.appendChild(searchPageCoverBlurMask);
+            blurredCovers.add(wrap); // 标记为已处理
+            // console.log('[Bilibili纯粹化] 已为一个视频封面添加模糊遮罩');
+        });
+    }
+
     // 监听页面变化
     function setupObserver() {
         const observer = new MutationObserver(() => {
-            const videoList = document.querySelector('.video-list');
-            if (videoList) {
-                hideAdVideos(videoList);
-            }
+            const videoLists = document.querySelectorAll('.video-list');
+            videoLists.forEach(videoList => {
+                hideAdVideos(videoList); // 隐藏推广视频
+                addBlurMask(videoList); // 添加模糊遮罩处理 (如果你不想要隐藏封面，那就注释掉这个)
+            });
         });
 
         observer.observe(document.body, {
@@ -1601,15 +1710,18 @@ function purifyComments() {
             subtree: true
         });
         
-        console.log('[Bilibili纯粹化] 搜索页广告视频隐藏功能已启用');
+        console.log('[Bilibili纯粹化] 搜索页功能已启用');
     }
     
     // 等待初始加载
     function init() {
-        const videoList = document.querySelector('.video-list');
+        const videoLists = document.querySelectorAll('.video-list');
         
-        if (videoList) {
-            hideAdVideos(videoList);
+        if (videoLists.length > 0 ) {
+            videoLists.forEach(videoList => {
+                hideAdVideos(videoList); // 隐藏推广视频
+                addBlurMask(videoList); // 添加模糊遮罩处理 (如果你不想要隐藏封面，那就注释掉这个)
+            });
             setupObserver();
         } else {
             setTimeout(init, 500);
@@ -1618,13 +1730,14 @@ function purifyComments() {
     
     init();
     }
-    //启用搜索页广告视频功能
+
+    // 启用搜索页功能
     if (window.location.hostname === 'search.bilibili.com') {
        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', removeSearchPageAdVideo);
-     } else {
+           document.addEventListener('DOMContentLoaded', removeSearchPageAdVideo);
+        } else {
             removeSearchPageAdVideo();
-     }
+        }
     }
 
 })();
