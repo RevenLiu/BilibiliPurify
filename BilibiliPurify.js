@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.3.0
+// @version      1.3.1
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -523,6 +523,192 @@
             background: #40c5f1;
         }
         
+        /* 封面模糊切换按钮样式 */
+        .blur-toggle-container {
+            display: flex;
+            align-items: center;
+            margin-left: auto;
+            padding: 0 16px;
+        }
+
+        .blur-toggle-button {
+            display: flex;
+            align-items: center;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 20px;
+            transition: background-color 0.2s ease;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        }
+
+        .blur-toggle-button:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .blur-toggle-inner {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .blur-toggle-label {
+            font-size: 14px;
+            color: #61666d;
+            user-select: none;
+        }
+
+        .blur-toggle-switch {
+            position: relative;
+            width: 40px;
+            height: 22px;
+            background-color: #c9ccd0;
+            border-radius: 11px;
+            transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .blur-toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 18px;
+            height: 18px;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .blur-toggle-switch.active {
+            background-color: #00aeec;
+        }
+
+        .blur-toggle-switch.active::after {
+            transform: translateX(18px);
+        }
+
+        /* 确认对话框样式 */
+        .blur-toggle-dialog-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background-color: rgba(0, 0, 0, 0);
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            z-index: 10000 !important;
+            transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .blur-toggle-dialog-overlay.show {
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+
+        .blur-toggle-dialog-overlay.closing {
+            background-color: rgba(0, 0, 0, 0);
+        }
+
+        .blur-toggle-dialog-overlay.closing .blur-toggle-dialog {
+            transform: scale(0.9);
+            opacity: 0;
+        }
+
+        .blur-toggle-dialog {
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 90%;
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        }
+
+        .blur-toggle-dialog-overlay.show .blur-toggle-dialog {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .blur-toggle-dialog-content {
+            padding: 32px 24px 24px;
+        }
+
+        .blur-toggle-dialog-title {
+            margin: 0 0 12px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #18191c;
+            opacity: 0;
+            animation: fadeInText 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.1s forwards;
+        }
+
+        .blur-toggle-dialog-message {
+            margin: 0 0 24px;
+            font-size: 15px;
+            color: #61666d;
+            line-height: 1.6;
+            opacity: 0;
+            animation: fadeInText 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
+        }
+
+        .blur-toggle-dialog-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            opacity: 0;
+            animation: fadeInText 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards;
+        }
+
+        .blur-toggle-dialog-btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        }
+
+        .blur-toggle-dialog-btn-cancel {
+            background-color: #f1f2f3;
+            color: #61666d;
+        }
+
+        .blur-toggle-dialog-btn-cancel:hover {
+            background-color: #e3e5e7;
+        }
+
+        .blur-toggle-dialog-btn-confirm {
+            background-color: #00aeec;
+            color: white;
+        }
+
+        .blur-toggle-dialog-btn-confirm:hover {
+            background-color: #40c5f1;
+        }
+
+        .blur-toggle-dialog-btn:active {
+            transform: scale(0.96);
+        }
+
+        @keyframes fadeInText {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     `;
 
     
@@ -1487,254 +1673,289 @@ function purifyComments() {
     }
 
 
-    //直播间首页播放器删除
-    function removeVideoOnly() {
-        const observer = new MutationObserver(() => {
-            const playerCtnr = document.querySelector('.player-ctnr.p-relative.over-hidden.dp-i-block.v-top.t-left');
-         if (playerCtnr) {
-              const video = playerCtnr.querySelector('video');
-             if (video) {
-                 video.remove();
-                    console.log('[Bilibili纯粹化] 已删除 video');
-                    observer.disconnect(); // 删除后停止监控
-            }
-        }
-    });
-    
-     observer.observe(document.documentElement, {
-          childList: true,
-          subtree: true
-    });
-    }
-
-    if (window.location.hostname === 'live.bilibili.com' && 
-       window.location.pathname === '/') {
-       removeVideoOnly();
-    }
-
-    // 直播分区页横幅样式修改
-    function modifyBannerClass() {
-        const observer = new MutationObserver(() => {
-            const banners = document.querySelectorAll('div.index_flip-view_R276P.index_banner_bPw9q');
-            
-            banners.forEach(banner => {
-                // 检查是否已经添加了目标 class
-                if (!banner.classList.contains('index_no_pic_TF1Ph') || 
-                    !banner.classList.contains('bg-bright-filter')) {
-                    banner.className = 'index_flip-view_R276P index_banner_bPw9q index_no_pic_TF1Ph bg-bright-filter';
-                    console.log('[Bilibili纯粹化] 已修改横幅 class');
-                }
-            });
-        });
-        
-        // 开始监听
-        observer.observe(document.documentElement, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: ['class']
-        });
-        
-        console.log('[Bilibili纯粹化] 直播横幅样式修改已启用');
-    }
-
-    // 在直播分区页面启用横幅样式修改
-    if (window.location.hostname === 'live.bilibili.com'  &&  
-        (window.location.pathname.includes('/p/')   ||
-        //谁设计的这分区规范？？？
-        //英雄联盟分区
-         window.location.pathname.includes('/lol/') ||
-        //吃鸡行动分区
-         window.location.pathname.includes('/area/'))) {
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', modifyBannerClass);
-        } else {
-            modifyBannerClass();
-        }
-    }
-
-    // 搜索框推荐关键字修改
-    function modifySearchInput() {
-        // 配置：
-        const searchConfig = {
-            //包含<input>的div
-            containerClasses: [
-                'nav-search-content',
-                'search-input-wrap.flex_between',
-                'p-relative.search-bar.over-hidden.border-box.t-nowrap'
-            ],
-            placeholder: '输入关键字搜索',
-            removeTitle: true
-        };
-
-        // 构建选择器字符串
-        const selectors = searchConfig.containerClasses.map(cls => {
-            const selector = cls.split('.').join('.');
-            return `.${selector} input`;
-        }).join(', ');
-
-        const observer = new MutationObserver(() => {
-            const inputs = document.querySelectorAll(selectors);
-            
-            inputs.forEach(input => {
-                // 修改 placeholder
-                if (input.placeholder !== searchConfig.placeholder) {
-                    input.placeholder = searchConfig.placeholder;
-                    console.log('[Bilibili纯粹化] 已修改搜索框 placeholder');
-                }
-                
-                // 删除 title 属性
-                if (searchConfig.removeTitle && input.hasAttribute('title')) {
-                    input.removeAttribute('title');
-                    console.log('[Bilibili纯粹化] 已删除搜索框 title 属性');
-                }
-            });
-        });
-        
-        // 开始监听
-        observer.observe(document.documentElement, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: ['placeholder', 'title']
-        });
-        
-        console.log('[Bilibili纯粹化] 搜索框修改功能已启用');
-    }
-
-    // 启用搜索框推荐关键字修改功能
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', modifySearchInput);
-    } else {
-        modifySearchInput();
-    }
-
     // 隐藏搜索页广告视频 + 模糊视频封面功能
     function removeSearchPageAdVideo() {
         const hiddenVideos = new Set(); // 记录已隐藏的视频
         const blurredCovers = new Set(); // 记录已添加模糊遮罩的封面
         const unblurredCovers = new Set(); // 记录用户已手动显示的封面
+        let isCoversBLurred = true; // 封面模糊开关，默认开启
 
-    // 隐藏广告视频
-    function hideAdVideos(container) {
-        if (!container) return;
-        
-        const videos = container.querySelectorAll(':scope > *');
-        videos.forEach(video => {
-            // 如果已经处理过，跳过
-            if (hiddenVideos.has(video)) return;
+        // 隐藏广告视频
+        function hideAdVideos(container) {
+            if (!container) return;
             
-            const adFeedbackEntry = video.querySelector('.ad-feedback-entry');
-            if (adFeedbackEntry) {
-                video.style.display = 'none';
-                hiddenVideos.add(video); // 标记为已处理
-                console.log('[Bilibili纯粹化] 已隐藏一个广告视频');
-            }
-        });
-    }
-
-    // 为视频封面添加模糊遮罩
-    function addBlurMask(container) {
-        if (!container) return;
-
-        const imageWraps = container.querySelectorAll('.bili-video-card__image--wrap');
-        imageWraps.forEach(wrap => {
-            // 如果已经处理过，或者用户已手动显示过，跳过
-            if (blurredCovers.has(wrap) || unblurredCovers.has(wrap)) return;
-
-            const picture = wrap.querySelector('.v-img.bili-video-card__cover');
-            if (!picture) return;
-
-            // 创建模糊遮罩层
-            const searchPageCoverBlurMask = document.createElement('div');
-            searchPageCoverBlurMask.className = 'search-cover__mask';
-
-            // 创建显示按钮
-            const searchPageCoverShowButton = document.createElement('button');
-            searchPageCoverShowButton.textContent = '显示封面';
-            searchPageCoverShowButton.className = 'search-cover__button'
-
-            // 鼠标悬停效果
-            searchPageCoverBlurMask.addEventListener('mouseenter', () => {
-                searchPageCoverShowButton.classList.add('visible');
+            const videos = container.querySelectorAll(':scope > *');
+            videos.forEach(video => {
+                if (hiddenVideos.has(video)) return;
+                
+                const adFeedbackEntry = video.querySelector('.ad-feedback-entry');
+                if (adFeedbackEntry) {
+                    video.style.display = 'none';
+                    hiddenVideos.add(video);
+                    console.log('[Bilibili纯粹化] 已隐藏一个广告视频');
+                }
             });
-
-            searchPageCoverBlurMask.addEventListener('mouseleave', () => {
-                searchPageCoverShowButton.classList.remove('visible');
-            });
-
-            // 按钮悬停效果
-            searchPageCoverShowButton.addEventListener('mouseenter', () => {
-                searchPageCoverShowButton.classList.add('mouse-in');
-            });
-
-            searchPageCoverShowButton.addEventListener('mouseleave', () => {
-                searchPageCoverShowButton.classList.remove('mouse-in');
-            });
-
-            // 点击按钮移除模糊层
-            searchPageCoverShowButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                searchPageCoverBlurMask.remove();
-                blurredCovers.delete(wrap); // 从已模糊记录中移除
-                unblurredCovers.add(wrap); // 添加到已显示记录，防止再次添加遮罩
-                // console.log('[Bilibili纯粹化] 已显示一个视频封面');
-            });
-
-            searchPageCoverBlurMask.appendChild(searchPageCoverShowButton);
-
-            // 确保 wrap 元素有相对定位
-            if (getComputedStyle(wrap).position === 'static') {
-                wrap.style.position = 'relative';
-            }
-
-            wrap.appendChild(searchPageCoverBlurMask);
-            blurredCovers.add(wrap); // 标记为已处理
-            // console.log('[Bilibili纯粹化] 已为一个视频封面添加模糊遮罩');
-        });
-    }
-
-    // 监听页面变化
-    function setupObserver() {
-        const observer = new MutationObserver(() => {
-            const videoLists = document.querySelectorAll('.video-list');
-            videoLists.forEach(videoList => {
-                hideAdVideos(videoList); // 隐藏推广视频
-                addBlurMask(videoList); // 添加模糊遮罩处理 (如果你不想要隐藏封面，那就注释掉这个)
-            });
-        });
-
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-        
-        console.log('[Bilibili纯粹化] 搜索页功能已启用');
-    }
-    
-    // 等待初始加载
-    function init() {
-        const videoLists = document.querySelectorAll('.video-list');
-        
-        if (videoLists.length > 0 ) {
-            videoLists.forEach(videoList => {
-                hideAdVideos(videoList); // 隐藏推广视频
-                addBlurMask(videoList); // 添加模糊遮罩处理 (如果你不想要隐藏封面，那就注释掉这个)
-            });
-            setupObserver();
-        } else {
-            setTimeout(init, 500);
         }
-    }
-    
-    init();
+
+        // 为视频封面添加模糊遮罩
+        function addBlurMask(container) {
+            if (!container || !isCoversBLurred) return; // 检查开关状态
+
+            const imageWraps = container.querySelectorAll('.bili-video-card__image--wrap');
+            imageWraps.forEach(wrap => {
+                if (blurredCovers.has(wrap) || unblurredCovers.has(wrap)) return;
+
+                const picture = wrap.querySelector('.v-img.bili-video-card__cover');
+                if (!picture) return;
+
+                const searchPageCoverBlurMask = document.createElement('div');
+                searchPageCoverBlurMask.className = 'search-cover__mask';
+
+                const searchPageCoverShowButton = document.createElement('button');
+                searchPageCoverShowButton.textContent = '显示封面';
+                searchPageCoverShowButton.className = 'search-cover__button';
+
+                searchPageCoverBlurMask.addEventListener('mouseenter', () => {
+                    searchPageCoverShowButton.classList.add('visible');
+                });
+
+                searchPageCoverBlurMask.addEventListener('mouseleave', () => {
+                    searchPageCoverShowButton.classList.remove('visible');
+                });
+
+                searchPageCoverShowButton.addEventListener('mouseenter', () => {
+                    searchPageCoverShowButton.classList.add('mouse-in');
+                });
+
+                searchPageCoverShowButton.addEventListener('mouseleave', () => {
+                    searchPageCoverShowButton.classList.remove('mouse-in');
+                });
+
+                searchPageCoverShowButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    searchPageCoverBlurMask.remove();
+                    blurredCovers.delete(wrap);
+                    unblurredCovers.add(wrap);
+                });
+
+                searchPageCoverBlurMask.appendChild(searchPageCoverShowButton);
+
+                if (getComputedStyle(wrap).position === 'static') {
+                    wrap.style.position = 'relative';
+                }
+
+                wrap.appendChild(searchPageCoverBlurMask);
+                blurredCovers.add(wrap);
+            });
+        }
+
+        // 移除所有模糊遮罩
+        function removeAllBlurMasks() {
+            const allMasks = document.querySelectorAll('.search-cover__mask');
+            allMasks.forEach(mask => {
+                const wrap = mask.parentElement;
+                mask.remove();
+                blurredCovers.delete(wrap);
+                unblurredCovers.add(wrap);
+            });
+            console.log('[Bilibili纯粹化] 已移除所有模糊遮罩');
+        }
+
+        // 创建确认对话框
+        function showConfirmDialog(onConfirm, onCancel) {
+            // 创建对话框容器
+            const dialogOverlay = document.createElement('div');
+            dialogOverlay.className = 'blur-toggle-dialog-overlay';
+            // 添加内联样式确保居中显示
+            dialogOverlay.style.cssText = 'position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; display: flex !important; align-items: center !important; justify-content: center !important; z-index: 10000 !important;';
+        
+            const dialogBox = document.createElement('div');
+            dialogBox.className = 'blur-toggle-dialog';
+            
+            // 对话框内容
+            const dialogContent = document.createElement('div');
+            dialogContent.className = 'blur-toggle-dialog-content';
+            
+            const title = document.createElement('h3');
+            title.className = 'blur-toggle-dialog-title';
+            title.textContent = '你正在尝试暂时关闭视觉防护。';
+            
+            const message = document.createElement('p');
+            message.className = 'blur-toggle-dialog-message';
+            message.textContent = '请确认这是你的主动决定。';
+            
+            const buttonGroup = document.createElement('div');
+            buttonGroup.className = 'blur-toggle-dialog-buttons';
+            
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'blur-toggle-dialog-btn blur-toggle-dialog-btn-cancel';
+            cancelBtn.textContent = '取消';
+            
+            const confirmBtn = document.createElement('button');
+            confirmBtn.className = 'blur-toggle-dialog-btn blur-toggle-dialog-btn-confirm';
+            confirmBtn.textContent = '确认';
+            
+            // 关闭对话框的函数
+            const closeDialog = () => {
+                dialogContent.remove();
+                dialogOverlay.classList.add('closing');
+                setTimeout(() => {
+                    dialogOverlay.remove();
+                }, 200);
+            };
+            
+            // 按钮事件
+            cancelBtn.addEventListener('click', () => {
+                closeDialog();
+                if (onCancel) onCancel();
+            });
+            
+            confirmBtn.addEventListener('click', () => {
+                closeDialog();
+                if (onConfirm) onConfirm();
+            });
+            
+            // 点击遮罩层关闭
+            dialogOverlay.addEventListener('click', (e) => {
+                if (e.target === dialogOverlay) {
+                    closeDialog();
+                    if (onCancel) onCancel();
+                }
+            });
+            
+            // 组装对话框
+            buttonGroup.appendChild(cancelBtn);
+            buttonGroup.appendChild(confirmBtn);
+            dialogContent.appendChild(title);
+            dialogContent.appendChild(message);
+            dialogContent.appendChild(buttonGroup);
+            dialogBox.appendChild(dialogContent);
+            dialogOverlay.appendChild(dialogBox);
+            
+            // 添加到页面
+            document.body.appendChild(dialogOverlay);
+            
+            // 触发动画
+            requestAnimationFrame(() => {
+                dialogOverlay.classList.add('show');
+            });
+        }
+
+        // 创建封面模糊切换按钮
+        function createBlurToggleButton() {
+            // 查找导航栏
+            const navBar = document.querySelector('.vui_tabs--nav.vui_tabs--nav-pl0');
+            if (!navBar) {
+                setTimeout(createBlurToggleButton, 500);
+                return;
+            }
+
+            // 检查是否已经添加过按钮
+            if (document.querySelector('.blur-toggle-container')) return;
+
+            // 创建按钮容器
+            const toggleContainer = document.createElement('li');
+            toggleContainer.className = 'blur-toggle-container';
+            
+            const toggleButton = document.createElement('button');
+            toggleButton.className = 'blur-toggle-button';
+            toggleButton.setAttribute('aria-label', '封面模糊开关');
+            
+            const toggleInner = document.createElement('span');
+            toggleInner.className = 'blur-toggle-inner';
+            
+            const toggleLabel = document.createElement('span');
+            toggleLabel.className = 'blur-toggle-label';
+            toggleLabel.textContent = '视觉防护';
+            
+            const toggleSwitch = document.createElement('span');
+            toggleSwitch.className = 'blur-toggle-switch active';
+            
+            toggleInner.appendChild(toggleLabel);
+            toggleInner.appendChild(toggleSwitch);
+            toggleButton.appendChild(toggleInner);
+            toggleContainer.appendChild(toggleButton);
+            
+            // 按钮点击事件
+            toggleButton.addEventListener('click', () => {
+                if (isCoversBLurred) {
+                    // 当前是开启状态，点击后显示确认对话框
+                    showConfirmDialog(
+                        // 确认回调
+                        () => {
+                            isCoversBLurred = false;
+                            toggleSwitch.classList.remove('active');
+                            removeAllBlurMasks();
+                            console.log('[Bilibili纯粹化] 视觉防护已关闭');
+                        },
+                        // 取消回调
+                        () => {
+                            // 保持开启状态，不做任何操作
+                            console.log('[Bilibili纯粹化] 取消关闭视觉防护');
+                        }
+                    );
+                } else {
+                    // 当前是关闭状态，直接开启
+                    isCoversBLurred = true;
+                    toggleSwitch.classList.add('active');
+                    // 清空已显示记录，允许重新添加遮罩
+                    unblurredCovers.clear();
+                    // 重新处理所有视频列表
+                    const videoLists = document.querySelectorAll('.video-list');
+                    videoLists.forEach(videoList => {
+                        addBlurMask(videoList);
+                    });
+                    console.log('[Bilibili纯粹化] 视觉防护已开启');
+                }
+            });
+            
+            // 添加到导航栏末尾
+            navBar.appendChild(toggleContainer);
+            console.log('[Bilibili纯粹化] 封面模糊开关按钮已添加');
+        }
+
+        // 监听页面变化
+        function setupObserver() {
+            const observer = new MutationObserver(() => {
+                const videoLists = document.querySelectorAll('.video-list');
+                videoLists.forEach(videoList => {
+                    hideAdVideos(videoList);
+                    addBlurMask(videoList);
+                });
+            });
+
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+            
+            console.log('[Bilibili纯粹化] 搜索页功能已启用');
+        }
+        
+        // 初始化
+        function init() {
+            const videoLists = document.querySelectorAll('.video-list');
+            
+            if (videoLists.length > 0) {
+                videoLists.forEach(videoList => {
+                    hideAdVideos(videoList);
+                    addBlurMask(videoList);
+                });
+                setupObserver();
+                createBlurToggleButton(); // 创建开关按钮
+            } else {
+                setTimeout(init, 500);
+            }
+        }
+        
+        init();
     }
 
     // 启用搜索页功能
     if (window.location.hostname === 'search.bilibili.com') {
-       if (document.readyState === 'loading') {
-           document.addEventListener('DOMContentLoaded', removeSearchPageAdVideo);
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', removeSearchPageAdVideo);
         } else {
             removeSearchPageAdVideo();
         }
