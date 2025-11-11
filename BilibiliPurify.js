@@ -623,7 +623,7 @@
             background: white;
             border-radius: 6px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            max-width: 400px;
+            max-width: 450px;
             width: 90%;
             transform: scale(0.9);
             opacity: 0;
@@ -1759,7 +1759,7 @@ function purifyComments() {
                 blurredCovers.delete(wrap);
                 unblurredCovers.add(wrap);
             });
-            console.log('[Bilibili纯粹化] 已移除所有模糊遮罩');
+            //console.log('[Bilibili纯粹化] 已移除所有模糊遮罩');
         }
 
         // 创建确认对话框
@@ -1779,22 +1779,22 @@ function purifyComments() {
             
             const title = document.createElement('h3');
             title.className = 'blur-toggle-dialog-title';
-            title.textContent = '你正在尝试暂时关闭视觉防护。';
+            title.textContent = '关闭视觉防护后，你将直接看到所有封面。';
             
             const message = document.createElement('p');
             message.className = 'blur-toggle-dialog-message';
-            message.textContent = '请确认这是你的主动决定。';
+            message.textContent = '你此刻的观看意图是什么？';
             
             const buttonGroup = document.createElement('div');
             buttonGroup.className = 'blur-toggle-dialog-buttons';
             
             const cancelBtn = document.createElement('button');
             cancelBtn.className = 'blur-toggle-dialog-btn blur-toggle-dialog-btn-cancel';
-            cancelBtn.textContent = '取消';
+            cancelBtn.textContent = '返回';
             
             const confirmBtn = document.createElement('button');
             confirmBtn.className = 'blur-toggle-dialog-btn blur-toggle-dialog-btn-confirm';
-            confirmBtn.textContent = '确认';
+            confirmBtn.textContent = '我已确认';
             
             // 关闭对话框的函数
             const closeDialog = () => {
