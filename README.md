@@ -24,6 +24,9 @@
 - 默认模糊搜索页中的视频封面，仅在主动选择时才显示。
   限制封面的第一视觉引诱。
 
+- 自动隐藏搜索页中可能的因分析算法而推荐出现的视频。
+  让搜索回归本意。
+
 ## 🔍 安装方式
 - 安装 [Tampermonkey 插件](https://www.tampermonkey.net/)
 - 点击此处[安装脚本](https://greasyfork.org/zh-CN/scripts/554780-bilibili-purify) 或 [下载](./BilibiliPurify.js)并手动导入
