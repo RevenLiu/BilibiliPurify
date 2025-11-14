@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.3.3
+// @version      1.4.0
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -19,6 +19,9 @@
 // @match        https://live.bilibili.com/*
 // @match        https://link.bilibili.com/*
 // @grant        GM_addStyle
+// @grant        GM_xmlhttpRequest
+// @connect      https://www.bilibili.com/
+// @connect      https://live.bilibili.com/
 // @run-at       document-start
 // ==/UserScript==
 
@@ -1801,6 +1804,23 @@ function purifyComments() {
         const blurredCovers = new Set(); // 记录已添加模糊遮罩的封面
         const unblurredCovers = new Set(); // 记录用户已手动显示的封面
         let isCoversBLurred = true; // 封面模糊开关，默认开启
+        const pendingVideos = new Set(); // 可能的算法推荐视频
+        let currentSearchKeyword = "";
+
+        // 当视频被添加到 pendingVideos 时，触发 pendingVideoAdded 事件
+        function addPendingVideo(video) {
+            if (!pendingVideos.has(video)) {
+                pendingVideos.add(video);
+                document.dispatchEvent(new Event('pendingVideoAdded')); // 触发事件
+            }
+        }
+
+        //根据视频元素构建视频URL
+        function buildUrlForTags(video){
+            const videoLinkTag = video.querySelector('a')
+            if(!videoLinkTag) return;
+            return videoLinkTag.href;
+        }
 
         // 隐藏广告视频
         function hideAdVideos(container) {
@@ -1815,8 +1835,35 @@ function purifyComments() {
                     video.style.display = 'none';
                     hiddenVideos.add(video);
                     console.log('[Bilibili纯粹化] 已隐藏一个广告视频');
+                    return;
                 }
+
+                if(pendingVideos.has(video))return;
+
+                // 获取当前URL
+                const currentUrl = new URL(window.location.href);
+                // 获取keyword参数值
+                const keyword = currentUrl.searchParams.get('keyword');
+                if (!keyword) return;
+                currentSearchKeyword = keyword;
+
+                const videoTitle = video.querySelector('.bili-video-card__info--tit');
+                const videoAuthor = video.querySelector('.bili-video-card__info--author');
+                if(!videoTitle || !videoAuthor)return;
+                var videoContainsKeyword = false;
+                keyword.split("").forEach(word => {
+                    if(videoTitle.textContent.includes(word) || videoAuthor.textContent.includes(word)){
+                        videoContainsKeyword = true;
+                        return;
+                    }
+                })
+                if(videoContainsKeyword)return;
+                video.style.display = 'none';
+                hiddenVideos.add(video);
+                addPendingVideo(video);
+                console.log('[Bilibili纯粹化] 已隐藏一个可能的分析算法推荐视频');
             });
+
         }
 
         // 为视频封面添加模糊遮罩
@@ -2054,6 +2101,44 @@ function purifyComments() {
             
             console.log('[Bilibili纯粹化] 搜索页功能已启用');
         }
+
+        // 监听 pendingVideoAdded 事件
+        document.addEventListener('pendingVideoAdded', () => {
+            // 处理每个新添加的视频
+            pendingVideos.forEach(video => {
+                // 如果视频还没有请求过标签数据，就发请求
+                if (!video.dataset.checked) {
+                    video.dataset.checked = 'true'; // 设置标记已检查
+                    const url = buildUrlForTags(video);
+                    GM_xmlhttpRequest({
+                        method: "GET",
+                        url: url,
+                        headers: {
+                        "Connection": "close"
+                        },
+                        onload: function(response) {
+                            const html = response.responseText;
+                            // 把 HTML 字符串转成 DOM
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, "text/html");
+                            // 选择 meta[itemprop="keywords"] 获取标签
+                            const metaKeywords = doc.querySelector('meta[itemprop="keywords"]');
+                            if(metaKeywords){
+                                const keywords = metaKeywords.getAttribute("content");
+                                // console.log("即将在: 【"+keywords+"】当中搜索: "+currentSearchKeyword);
+                                if(keywords.includes(currentSearchKeyword)){
+                                        video.style.display = '';
+                                        console.log("[Bilibili纯粹化] 在视频【"+video.querySelector('.bili-video-card__info--tit').textContent+"】的标签:【"+keywords+"】中发现了【"+currentSearchKeyword+"】，已恢复该视频显示");
+                                    }
+                            }
+                        },
+                        onerror: function(error) {
+                            console.error('请求标签数据失败:', error);
+                        }
+                    });
+                }
+            });
+        });
         
         // 初始化
         function init() {
