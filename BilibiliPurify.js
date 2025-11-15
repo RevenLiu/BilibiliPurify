@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.4.4
+// @version      1.4.5
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -1872,6 +1872,71 @@ function purifyComments() {
             return videoUrl;
         }
 
+        //智能提取关键词
+        function smartTokenize(keyword) {
+            keyword = keyword.trim();
+            if (!keyword) return [];
+
+            // 如果用户自己打了空格，那我们就尊重空格拆法
+            if (/\s/.test(keyword)) {
+                return keyword.split(/\s+/).filter(Boolean);
+            }
+
+            const hasChinese = /[\u4e00-\u9fa5]/.test(keyword);
+            const hasLatinDigit = /[a-zA-Z0-9]/.test(keyword);
+
+            // 只英文/数字：整体作为一个token
+            if (!hasChinese && hasLatinDigit) {
+                return [keyword];
+            }
+
+            // 只中文：用整串 + 二字滑窗做token
+            if (hasChinese && !hasLatinDigit) {
+                const s = keyword.replace(/\s+/g, '');
+                if (s.length <= 2) return [s]; // 太短就不拆
+                const tokens = [s];
+                for (let i = 0; i < s.length - 1; i++) {
+                    tokens.push(s.slice(i, i + 2));
+                }
+                return tokens;
+            }
+
+            // 混合中文 + 英文/数字：按字符类型分段
+            const tokens = [];
+            let current = '';
+            let currentType = null;
+
+            const getType = ch => {
+                if (/[\u4e00-\u9fa5]/.test(ch)) return 'C';          // Chinese
+                if (/[a-zA-Z0-9]/.test(ch)) return 'L';              // Latin/digit
+                return 'O';                                          // other符号
+            };
+
+            for (const ch of keyword) {
+                const t = getType(ch);
+                if (t === 'O') {
+                    // 符号：当作分隔
+                    if (current) {
+                        tokens.push(current);
+                        current = '';
+                        currentType = null;
+                    }
+                    continue;
+                }
+                if (!currentType || t === currentType) {
+                    current += ch;
+                    currentType = t;
+                } else {
+                    tokens.push(current);
+                    current = ch;
+                    currentType = t;
+                }
+            }
+            if (current) tokens.push(current);
+
+            return tokens.filter(Boolean);
+        }
+
         // 隐藏广告视频/推送视频
         function hideAdVideos(container) {
             if (!container) return;
@@ -1890,49 +1955,67 @@ function purifyComments() {
                 }
 
                 if(pendingVideos.has(video))return;
-
-                
-
                 // 隐藏推送视频
                 const currentUrl = new URL(window.location.href);
-                const keyword = normalizeText(currentUrl.searchParams.get('keyword'));
-                if (!keyword) return;
-                currentSearchKeyword = keyword;
+                const rawKeyword = currentUrl.searchParams.get('keyword');
+                if (!rawKeyword) return;
+
+                currentSearchKeyword = rawKeyword;
+
                 const videoTitle = video.querySelector('.bili-video-card__info--tit');
                 const videoAuthor = video.querySelector('.bili-video-card__info--author');
-                const hasChinese = /[\u4e00-\u9fa5]/.test(keyword);
-                if(!videoTitle || !videoAuthor)return;
-                const videoTitleText = normalizeText(videoTitle.textContent);
-                const videoAuthorText = normalizeText(videoAuthor.textContent);
-                const keyWords = keyword.split("")
-                // 如果包含中文，使用逐字符模糊匹配逻辑，如果不包含中文，使用关键词整体包含匹配逻辑
-                if(hasChinese){
-                    //console.log("[Bilibili纯粹化-调试] 正以包含中文的模式隐藏推送视频")
-                    let matchCount = 0;
-                    keyWords.forEach(word => {
-                        if(videoTitleText.includes(word) || videoAuthorText.includes(word)){
-                            matchCount++;
-                            return;
-                        }
-                    })
-                    if(matchCount==keyWords.length)return;
-                    video.style.display = 'none';
-                    hiddenVideos.add(video);
-                    addPendingVideo(video);
-                    console.log('[Bilibili纯粹化] 已隐藏一个可能的分析算法推荐视频');
-                }else{
-                    //console.log("[Bilibili纯粹化-调试] 正以不包含中文的模式隐藏推送视频")
-                    const isMatch =
-                        videoTitleText.includes(keyword) ||
-                        videoAuthorText.includes(keyword);
-                    if (isMatch) {
-                        return;
-                    }
-                    video.style.display = 'none';
-                    hiddenVideos.add(video);
-                    addPendingVideo(video);
-                    console.log('[Bilibili纯粹化] 已隐藏一个可能的分析算法推荐视频');
+                if (!videoTitle || !videoAuthor) return;
+
+                const videoTitleText  = videoTitle.textContent || '';
+                const videoAuthorText = videoAuthor.textContent || '';
+
+                const normTitle  = normalizeText(videoTitleText);
+                const normAuthor = normalizeText(videoAuthorText);
+
+                // 智能拆词
+                let tokens = smartTokenize(rawKeyword);
+                // 把整串原keyword也当作一个token，增加命中机会：
+                if (!tokens.includes(rawKeyword.trim())) {
+                    tokens.unshift(rawKeyword.trim());
                 }
+
+                // 规范化每个token
+                const normTokens = tokens
+                    .map(t => normalizeText(t))
+                    .filter(t => t.length > 0);
+
+                if (!normTokens.length) return;
+
+                // 统计命中token的数量
+                let matchTokenCount = 0;
+                for (const token of normTokens) {
+                    if (normTitle.includes(token) || normAuthor.includes(token)) {
+                        matchTokenCount++;
+                    }
+                }
+
+                let keepVideo = false;
+
+                if (normTokens.length === 1) {
+                    // 单一关键词（大概率是ID），必须命中才保留
+                    keepVideo = matchTokenCount === 1;
+                } else {
+                    // 多token情况：至少命中一个就保留
+                    // 可以改成比例形式：
+                    // const ratio = matchTokenCount / normTokens.length;
+                    // keepVideo = ratio >= 0.3; // 举例
+                    keepVideo = matchTokenCount >= 1;
+                }
+
+                if (keepVideo) {
+                    return; // 不隐藏
+                }
+
+                // 否则视为推荐视频，隐藏
+                video.style.display = 'none';
+                hiddenVideos.add(video);
+                addPendingVideo(video);
+                console.log('[Bilibili纯粹化] 已隐藏一个可能的分析算法推荐视频');
             });
 
         }
@@ -2189,27 +2272,71 @@ function purifyComments() {
                         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0"
                         },
                         onload: function(response) {
-                            if(!video.isConnected){
+                            if (!video.isConnected) {
                                 requestInstances.abort();
                                 console.log("[Bilibili纯粹化] 检测到废弃节点，已停止对应的请求。");
+                                return;
                             }
+
                             const html = response.responseText;
-                            // 把 HTML 字符串转成 DOM
                             const parser = new DOMParser();
                             const doc = parser.parseFromString(html, "text/html");
-                            // 获取标签/简介
+
                             const metaKeywords = doc.querySelector('meta[itemprop="keywords"]');
+                            const metaTitle = doc.querySelector('meta[itemprop="name"]');
                             const descriptionElement = doc.querySelector('span.desc-info-text');
-                            const authorDescriptionElement = doc.querySelector('.up-description.up-detail-bottom')
-                            if(metaKeywords && descriptionElement && authorDescriptionElement){
-                                const keywords = normalizeText(metaKeywords.getAttribute("content"));
-                                const description = normalizeText(descriptionElement.textContent);
-                                const authorDescription = normalizeText(authorDescriptionElement.getAttribute('title'));
-                                //console.log("[Bilibili纯粹化-调试] 即将在: 【"+keywords+"】【"+description+"】【"+authorDescription+"】当中搜索: "+keyword);
-                                if(keywords.includes(keyword) || description.includes(keyword) || authorDescription.includes(keyword)){
-                                        video.style.display = '';
-                                        console.log("[Bilibili纯粹化] 在视频【"+video.querySelector('.bili-video-card__info--tit').textContent+"】的标签/简介/作者简介中发现了【"+keyword+"】，已恢复该视频显示");
+                            const authorDescriptionElement = doc.querySelector('.up-description.up-detail-bottom');
+
+                            if (metaKeywords && metaTitle && descriptionElement && authorDescriptionElement) {
+                                const keywordsText = normalizeText(metaKeywords.getAttribute("content"));
+                                const titleText = normalizeText(metaTitle.getAttribute("content"));
+                                const descriptionText = normalizeText(descriptionElement.textContent);
+                                const authorDescText = normalizeText(authorDescriptionElement.getAttribute('title'));
+
+                                const rawKeyword = currentSearchKeyword || keyword;
+                                let tokens = smartTokenize(rawKeyword);
+
+                                // 把原搜索词整体也作为一个 token
+                                if (!tokens.includes(rawKeyword.trim())) {
+                                    tokens.unshift(rawKeyword.trim());
+                                }
+
+                                // 规范化 tokens
+                                const normTokens = tokens
+                                    .map(t => normalizeText(t))
+                                    .filter(t => t.length > 0);
+
+
+                                let matchTokenCount = 0;
+
+                                for (const token of normTokens) {
+                                    if (
+                                        keywordsText.includes(token) ||
+                                        titleText.includes(token) ||
+                                        descriptionText.includes(token) ||
+                                        authorDescText.includes(token)
+                                    ) {
+                                        matchTokenCount++;
                                     }
+                                }
+
+                                // 判断是否命中 
+                                let keepVideo = false;
+
+                                if (normTokens.length === 1) {
+                                    // 单一关键词:
+                                    keepVideo = matchTokenCount === 1;
+                                } else {
+                                    // 多词：
+                                    keepVideo = matchTokenCount >= 1;
+                                }
+
+                                // 恢复视频 
+                                if (keepVideo) {
+                                    video.style.display = '';
+                                    const title = video.querySelector('.bili-video-card__info--tit')?.textContent || '';
+                                    console.log(`[Bilibili纯粹化] 在视频【${title}】的标签/简介/作者简介中命中关键词，已恢复该视频显示`);
+                                }
                             }
                         },
                         onerror: function(error) {
