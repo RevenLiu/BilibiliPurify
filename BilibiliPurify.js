@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.4.3
+// @version      1.4.4
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -1830,7 +1830,6 @@ function purifyComments() {
                 return ret;
             };
         }
-
         history.pushState = wrapHistoryMethod('pushState');
         history.replaceState = wrapHistoryMethod('replaceState');
 
@@ -1843,7 +1842,6 @@ function purifyComments() {
         function handleUrlChange() {
         if (location.href === lastHref) return; // 防止重复处理
         lastHref = location.href;
-        location.reload(false);
         //console.log("url变啦!")
         if(allRequestInstances.size>=1){
             allRequestInstances.forEach(requestInstance => {
@@ -2191,6 +2189,10 @@ function purifyComments() {
                         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0"
                         },
                         onload: function(response) {
+                            if(!video.isConnected){
+                                requestInstances.abort();
+                                console.log("[Bilibili纯粹化] 检测到废弃节点，已停止对应的请求。");
+                            }
                             const html = response.responseText;
                             // 把 HTML 字符串转成 DOM
                             const parser = new DOMParser();
@@ -2206,15 +2208,27 @@ function purifyComments() {
                                 //console.log("[Bilibili纯粹化-调试] 即将在: 【"+keywords+"】【"+description+"】【"+authorDescription+"】当中搜索: "+keyword);
                                 if(keywords.includes(keyword) || description.includes(keyword) || authorDescription.includes(keyword)){
                                         video.style.display = '';
-                                        console.log("[Bilibili纯粹化] 在视频【"+video.querySelector('.bili-video-card__info--tit').textContent+"】的标签:【"+keywords+"】，简介:【"+description+"】和作者简介:【"+authorDescription+"】中发现了【"+keyword+"】，已恢复该视频显示");
+                                        console.log("[Bilibili纯粹化] 在视频【"+video.querySelector('.bili-video-card__info--tit').textContent+"】的标签/简介/作者简介中发现了【"+keyword+"】，已恢复该视频显示");
                                     }
                             }
                         },
                         onerror: function(error) {
                             console.error('请求视频数据失败:', error);
+                        },
+                        onprogress: function(response) {
+                            if(!video.isConnected){
+                                requestInstances.abort();
+                                console.log("[Bilibili纯粹化] 检测到废弃节点，已停止对应的请求。");
+                            }
+                        },
+                        onreadystatechange: function(respons){
+                            if(!video.isConnected){
+                                requestInstances.abort();
+                                console.log("[Bilibili纯粹化] 检测到废弃节点，已停止对应的请求。");
+                            }
                         }
                         });
-                        allRequestInstances.add(requestInstances);
+                    allRequestInstances.add(requestInstances);
                 }
             });
         });
