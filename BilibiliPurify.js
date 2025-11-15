@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.4.0
+// @version      1.4.1
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -20,8 +20,8 @@
 // @match        https://link.bilibili.com/*
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
-// @connect      https://www.bilibili.com/
-// @connect      https://live.bilibili.com/
+// @connect      www.bilibili.com
+// @connect      live.bilibili.com
 // @run-at       document-start
 // ==/UserScript==
 
@@ -726,6 +726,16 @@
         max = Math.floor(max);
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
+
+    // 辅助函数 - 标准化字符格式
+    function normalizeText(str) {
+    if (!str) return '';
+    return str
+        .toLowerCase()
+        .normalize('NFKC')                   // 统一全角半角
+        .replace(/[\s\-_]+/g, '')            // 去掉空格/下划线/横线等分隔符
+}
+
 
 
 // 评论区净化功能 - 移除超链接、点赞数、UP主点赞标识、用户装饰
@@ -1768,13 +1778,13 @@ function purifyComments() {
                 // 修改 placeholder
                 if (input.placeholder !== searchConfig.placeholder) {
                     input.placeholder = searchConfig.placeholder;
-                    console.log('[Bilibili纯粹化] 已修改搜索框 placeholder');
+                    //console.log('[Bilibili纯粹化] 已修改搜索框 placeholder');
                 }
                 
                 // 删除 title 属性
                 if (searchConfig.removeTitle && input.hasAttribute('title')) {
                     input.removeAttribute('title');
-                    console.log('[Bilibili纯粹化] 已删除搜索框 title 属性');
+                    //console.log('[Bilibili纯粹化] 已删除搜索框 title 属性');
                 }
             });
         });
@@ -1805,7 +1815,44 @@ function purifyComments() {
         const unblurredCovers = new Set(); // 记录用户已手动显示的封面
         let isCoversBLurred = true; // 封面模糊开关，默认开启
         const pendingVideos = new Set(); // 可能的算法推荐视频
+        const allRequestInstances = new Set(); // 发起的网络请求
         let currentSearchKeyword = "";
+        const URL_CHANGE_EVENT = 'bp-url-change'; // 自定义的url更新事件
+        let lastHref = location.href; // 变更前url存储
+
+        // 包裹原生 pushState / replaceState 调用后手动派发事件
+        function wrapHistoryMethod(type) {
+            const orig = history[type];
+            return function () {
+                const ret = orig.apply(this, arguments);
+                // 派发事件
+                window.dispatchEvent(new Event(URL_CHANGE_EVENT));
+                return ret;
+            };
+        }
+
+        history.pushState = wrapHistoryMethod('pushState');
+        history.replaceState = wrapHistoryMethod('replaceState');
+
+        // 监听浏览器前进/后退
+        window.addEventListener('popstate', function () {
+            window.dispatchEvent(new Event(URL_CHANGE_EVENT));
+        });
+
+        // url变更后行为
+        function handleUrlChange() {
+        if (location.href === lastHref) return;  // 防止重复处理
+        lastHref = location.href;
+        
+        //console.log("url变啦!")
+        if(allRequestInstances.size>=1){
+            allRequestInstances.forEach(requestInstance => {
+                requestInstance.abort();
+                console.log("[Bilibili纯粹化] 已停止之前的网络请求");
+            })
+        }
+        allRequestInstances.clear();
+    }
 
         // 当视频被添加到 pendingVideos 时，触发 pendingVideoAdded 事件
         function addPendingVideo(video) {
@@ -1822,12 +1869,13 @@ function purifyComments() {
             return videoLinkTag.href;
         }
 
-        // 隐藏广告视频
+        // 隐藏广告视频/推送视频
         function hideAdVideos(container) {
             if (!container) return;
             
             const videos = container.querySelectorAll(':scope > *');
             videos.forEach(video => {
+                // 隐藏广告视频
                 if (hiddenVideos.has(video)) return;
                 
                 const adFeedbackEntry = video.querySelector('.ad-feedback-entry');
@@ -1840,28 +1888,48 @@ function purifyComments() {
 
                 if(pendingVideos.has(video))return;
 
-                // 获取当前URL
+                
+
+                // 隐藏推送视频
                 const currentUrl = new URL(window.location.href);
-                // 获取keyword参数值
-                const keyword = currentUrl.searchParams.get('keyword');
+                const keyword = normalizeText(currentUrl.searchParams.get('keyword'));
                 if (!keyword) return;
                 currentSearchKeyword = keyword;
-
                 const videoTitle = video.querySelector('.bili-video-card__info--tit');
                 const videoAuthor = video.querySelector('.bili-video-card__info--author');
+                const hasChinese = /[\u4e00-\u9fa5]/.test(keyword);
                 if(!videoTitle || !videoAuthor)return;
-                var videoContainsKeyword = false;
-                keyword.split("").forEach(word => {
-                    if(videoTitle.textContent.includes(word) || videoAuthor.textContent.includes(word)){
-                        videoContainsKeyword = true;
+                const videoTitleText = normalizeText(videoTitle.textContent);
+                const videoAuthorText = normalizeText(videoAuthor.textContent);
+                const keyWords = keyword.split("")
+                // 如果包含中文，使用逐字符模糊匹配逻辑，如果不包含中文，使用关键词整体包含匹配逻辑
+                if(hasChinese){
+                    //console.log("[Bilibili纯粹化-调试] 正以包含中文的模式隐藏推送视频")
+                    let matchCount = 0;
+                    keyWords.forEach(word => {
+                        if(videoTitleText.includes(word) || videoAuthorText.includes(word)){
+                            matchCount++;
+                            return;
+                        }
+                    })
+                    if(matchCount==keyWords.length)return;
+                    video.style.display = 'none';
+                    hiddenVideos.add(video);
+                    addPendingVideo(video);
+                    console.log('[Bilibili纯粹化] 已隐藏一个可能的分析算法推荐视频');
+                }else{
+                    //console.log("[Bilibili纯粹化-调试] 正以不包含中文的模式隐藏推送视频")
+                    const isMatch =
+                        videoTitleText.includes(keyword) ||
+                        videoAuthorText.includes(keyword);
+                    if (isMatch) {
                         return;
                     }
-                })
-                if(videoContainsKeyword)return;
-                video.style.display = 'none';
-                hiddenVideos.add(video);
-                addPendingVideo(video);
-                console.log('[Bilibili纯粹化] 已隐藏一个可能的分析算法推荐视频');
+                    video.style.display = 'none';
+                    hiddenVideos.add(video);
+                    addPendingVideo(video);
+                    console.log('[Bilibili纯粹化] 已隐藏一个可能的分析算法推荐视频');
+                }
             });
 
         }
@@ -2102,15 +2170,16 @@ function purifyComments() {
             console.log('[Bilibili纯粹化] 搜索页功能已启用');
         }
 
-        // 监听 pendingVideoAdded 事件
+        // 监听 pendingVideoAdded 事件，重新检查视频
         document.addEventListener('pendingVideoAdded', () => {
-            // 处理每个新添加的视频
             pendingVideos.forEach(video => {
-                // 如果视频还没有请求过标签数据，就发请求
+                // 如果未被检查过，进行检查流程
                 if (!video.dataset.checked) {
                     video.dataset.checked = 'true'; // 设置标记已检查
                     const url = buildUrlForTags(video);
-                    GM_xmlhttpRequest({
+                    const keyword = currentSearchKeyword;
+                    const hasChinese = /[\u4e00-\u9fa5]/.test(keyword);
+                    const requestInstances = GM_xmlhttpRequest({
                         method: "GET",
                         url: url,
                         headers: {
@@ -2121,24 +2190,32 @@ function purifyComments() {
                             // 把 HTML 字符串转成 DOM
                             const parser = new DOMParser();
                             const doc = parser.parseFromString(html, "text/html");
-                            // 选择 meta[itemprop="keywords"] 获取标签
+                            // 获取标签/简介
                             const metaKeywords = doc.querySelector('meta[itemprop="keywords"]');
-                            if(metaKeywords){
-                                const keywords = metaKeywords.getAttribute("content");
-                                // console.log("即将在: 【"+keywords+"】当中搜索: "+currentSearchKeyword);
-                                if(keywords.includes(currentSearchKeyword)){
+                            const descriptionElement = doc.querySelector('span.desc-info-text');
+                            const authorDescriptionElement = doc.querySelector('.up-description.up-detail-bottom')
+                            if(metaKeywords && descriptionElement && authorDescriptionElement){
+                                const keywords = normalizeText(metaKeywords.getAttribute("content"));
+                                const description = normalizeText(descriptionElement.textContent);
+                                const authorDescription = normalizeText(authorDescriptionElement.getAttribute('title'));
+                                //console.log("[Bilibili纯粹化-调试] 即将在: 【"+keywords+"】【"+description+"】【"+authorDescription+"】当中搜索: "+keyword);
+                                if(keywords.includes(keyword) || description.includes(keyword) || authorDescription.includes(keyword)){
                                         video.style.display = '';
-                                        console.log("[Bilibili纯粹化] 在视频【"+video.querySelector('.bili-video-card__info--tit').textContent+"】的标签:【"+keywords+"】中发现了【"+currentSearchKeyword+"】，已恢复该视频显示");
+                                        console.log("[Bilibili纯粹化] 在视频【"+video.querySelector('.bili-video-card__info--tit').textContent+"】的标签:【"+keywords+"】，简介:【"+description+"】和作者简介:【"+authorDescription+"】中发现了【"+keyword+"】，已恢复该视频显示");
                                     }
                             }
                         },
                         onerror: function(error) {
-                            console.error('请求标签数据失败:', error);
+                            console.error('请求视频数据失败:', error);
                         }
-                    });
+                        });
+                        allRequestInstances.add(requestInstances);
                 }
             });
         });
+
+        // 监听url变动
+        window.addEventListener(URL_CHANGE_EVENT, handleUrlChange);
         
         // 初始化
         function init() {
