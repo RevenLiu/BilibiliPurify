@@ -1851,6 +1851,7 @@ function purifyComments() {
                 console.log("[Bilibili纯粹化] 已停止之前的网络请求");
             })
         }
+        pendingVideos.clear();
         allRequestInstances.clear();
     }
 
@@ -2182,7 +2183,6 @@ function purifyComments() {
                     video.dataset.checked = 'true'; // 设置标记已检查
                     const url = buildUrlForTags(video);
                     const keyword = currentSearchKeyword;
-                    const hasChinese = /[\u4e00-\u9fa5]/.test(keyword);
                     const requestInstances = GM_xmlhttpRequest({
                         method: "GET",
                         url: url,
