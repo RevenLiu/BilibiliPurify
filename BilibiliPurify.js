@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.4.1
+// @version      1.4.2
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -1595,51 +1595,51 @@ function purifyComments() {
 
 
 
-    //修改特殊弹幕
-    const regularDanmakuClassname = 'bili-danmaku-x-dm bili-danmaku-x-roll bili-danmaku-x-show';
-    // 标准弹幕style
-    const regularDanmakuStyle = `--opacity: 1; --fontSize: 25px; --fontFamily: SimHei, "Microsoft JhengHei", Arial, Helvetica, sans-serif; --fontWeight: bold; --color: #ffffff; --textShadow: 1px 0 1px #000000,0 1px 1px #000000,0 -1px 1px #000000,-1px 0 1px #000000; --display: none; --offset: 1275px; --translateX: -1387px; --duration: 9.5s; --top: 0px;`;
-    const whiteColorHex = '#ffffff';
-    const MAX_TOP_PIXELS = 200; // 特殊弹幕替换滚动顶部随机距离范围上限
-    const MIN_TOP_PIXELS = 0;   // 特殊弹幕替换滚动顶部随机距离范围下限
-    // 所有不需要处理（非特殊弹幕）的类名集合
-    const standardClassnames = new Set([
-        regularDanmakuClassname,
-        'bili-danmaku-x-dm bili-danmaku-x-roll',    // preparingDanmakuClassname
-        'bili-danmaku-x-dm',                       // offScreenDanmakuClassname
-        'bili-danmaku-x-dm-rotate',                // danmakuRotateClassname
-        'bilibili-combo-danmaku-container'         // comboDanmakucontainerClassname
-    ]);
+        //修改特殊弹幕
+        const regularDanmakuClassname = 'bili-danmaku-x-dm bili-danmaku-x-roll bili-danmaku-x-show';
+        // 标准弹幕style
+        const regularDanmakuStyle = `--opacity: 1; --fontSize: 25px; --fontFamily: SimHei, "Microsoft JhengHei", Arial, Helvetica, sans-serif; --fontWeight: bold; --color: #ffffff; --textShadow: 1px 0 1px #000000,0 1px 1px #000000,0 -1px 1px #000000,-1px 0 1px #000000; --display: none; --offset: 1275px; --translateX: -1387px; --duration: 9.5s; --top: 0px;`;
+        const whiteColorHex = '#ffffff';
+        const MAX_TOP_PIXELS = 200; // 特殊弹幕替换滚动顶部随机距离范围上限
+        const MIN_TOP_PIXELS = 0;   // 特殊弹幕替换滚动顶部随机距离范围下限
+        // 所有不需要处理（非特殊弹幕）的类名集合
+        const standardClassnames = new Set([
+            regularDanmakuClassname,
+            'bili-danmaku-x-dm bili-danmaku-x-roll',    // preparingDanmakuClassname
+            'bili-danmaku-x-dm',                       // offScreenDanmakuClassname
+            'bili-danmaku-x-dm-rotate',                // danmakuRotateClassname
+            'bilibili-combo-danmaku-container'         // comboDanmakucontainerClassname
+        ]);
 
-    const danmakuContainer = document.querySelector('.danmaku-item-container');
-    if (!danmakuContainer) return;
+        const danmakuContainer = document.querySelector('.danmaku-item-container');
+        if (!danmakuContainer) return;
 
-    const danmakus = danmakuContainer.childNodes;
+        const danmakus = danmakuContainer.childNodes;
 
-    danmakus.forEach(danmaku => {
-        if (danmaku.nodeType !== 1 || !danmaku.style) return; 
+        danmakus.forEach(danmaku => {
+            if (danmaku.nodeType !== 1 || !danmaku.style) return; 
 
-        const currentClassName = danmaku.className;
-        const isStandardClass = standardClassnames.has(currentClassName);
-        const currentColor = danmaku.style.getPropertyValue('--color').trim();
+            const currentClassName = danmaku.className;
+            const isStandardClass = standardClassnames.has(currentClassName);
+            const currentColor = danmaku.style.getPropertyValue('--color').trim();
 
-        //修改非白色弹幕的颜色
-        if (isStandardClass && currentColor !== whiteColorHex) {
-            //console.log(`[Bilibili纯粹化-调试] [滚动非白色弹幕] ${danmaku.textContent}, 类名:${currentClassName}, 颜色:${currentColor}`);
-            // 修改颜色
-            danmaku.style.setProperty('--color', whiteColorHex);
-        }
+            //修改非白色弹幕的颜色
+            if (isStandardClass && currentColor !== whiteColorHex) {
+                //console.log(`[Bilibili纯粹化-调试] [滚动非白色弹幕] ${danmaku.textContent}, 类名:${currentClassName}, 颜色:${currentColor}`);
+                // 修改颜色
+                danmaku.style.setProperty('--color', whiteColorHex);
+            }
 
-        //修改非滚动弹幕的类型
-        if (!isStandardClass) {
-            //console.log(`[Bilibili纯粹化-调试] [非滚动弹幕] ${danmaku.textContent}, 原始类名:${currentClassName}, 颜色:${currentColor}`);
-            // 修改类名并给予随机顶部距离
-            danmaku.className = regularDanmakuClassname;
-            danmaku.setAttribute('style',regularDanmakuStyle);
-           const randomTop = getRandomInt(MIN_TOP_PIXELS, MAX_TOP_PIXELS);
-            danmaku.style.setProperty('--top', `${randomTop}px`);
-        }
-    });
+            //修改非滚动弹幕的类型
+            if (!isStandardClass) {
+                //console.log(`[Bilibili纯粹化-调试] [非滚动弹幕] ${danmaku.textContent}, 原始类名:${currentClassName}, 颜色:${currentColor}`);
+                // 修改类名并给予随机顶部距离
+                danmaku.className = regularDanmakuClassname;
+                danmaku.setAttribute('style',regularDanmakuStyle);
+            const randomTop = getRandomInt(MIN_TOP_PIXELS, MAX_TOP_PIXELS);
+                danmaku.style.setProperty('--top', `${randomTop}px`);
+            }
+        });
     }
 
     // 监听直播间聊天框的动态变化
@@ -1866,7 +1866,11 @@ function purifyComments() {
         function buildUrlForTags(video){
             const videoLinkTag = video.querySelector('a')
             if(!videoLinkTag) return;
-            return videoLinkTag.href;
+            let videoUrl = videoLinkTag.href;
+            if(videoUrl.includes("m.bilibili.com")){
+                videoUrl.replace("m.bilibili.com","www.bilibili.com");
+            }
+            return videoUrl;
         }
 
         // 隐藏广告视频/推送视频
@@ -2183,7 +2187,8 @@ function purifyComments() {
                         method: "GET",
                         url: url,
                         headers: {
-                        "Connection": "close"
+                        "Connection": "close",
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0"
                         },
                         onload: function(response) {
                             const html = response.responseText;
