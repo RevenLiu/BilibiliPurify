@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.4.5
+// @version      1.4.6
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -2015,6 +2015,7 @@ function purifyComments() {
                 video.style.display = 'none';
                 hiddenVideos.add(video);
                 addPendingVideo(video);
+                //console.log(`[Bilibili纯粹化-调试] 已隐藏一个可能的分析算法推荐视频:【${video.querySelector('.bili-video-card__info--tit')?.textContent}】，目前的检查视频set大小为:【${pendingVideos.size}】`);
                 console.log('[Bilibili纯粹化] 已隐藏一个可能的分析算法推荐视频');
             });
 
@@ -2261,9 +2262,11 @@ function purifyComments() {
             pendingVideos.forEach(video => {
                 // 如果未被检查过，进行检查流程
                 if (!video.dataset.checked) {
+                    //console.log(`[Bilibili纯粹化-调试] 视频【${video.querySelector('.bili-video-card__info--tit')?.textContent}】成功进入检查流程`)
                     video.dataset.checked = 'true'; // 设置标记已检查
                     const url = buildUrlForTags(video);
                     const keyword = currentSearchKeyword;
+                    //console.log(`[Bilibili纯粹化-调试] 即将开始针对视频【${video.querySelector('.bili-video-card__info--tit')?.textContent}】的网络请求`)
                     const requestInstances = GM_xmlhttpRequest({
                         method: "GET",
                         url: url,
@@ -2272,8 +2275,10 @@ function purifyComments() {
                         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0"
                         },
                         onload: function(response) {
+                            //console.log(`[Bilibili纯粹化-调试] 视频【${video.querySelector('.bili-video-card__info--tit')?.textContent}】的网络请求成功`)
                             if (!video.isConnected) {
                                 requestInstances.abort();
+                                //console.log(`[Bilibili纯粹化-调试] 视频【${video.querySelector('.bili-video-card__info--tit')?.textContent}】被判定为废弃节点`)
                                 console.log("[Bilibili纯粹化] 检测到废弃节点，已停止对应的请求。");
                                 return;
                             }
@@ -2287,56 +2292,60 @@ function purifyComments() {
                             const descriptionElement = doc.querySelector('span.desc-info-text');
                             const authorDescriptionElement = doc.querySelector('.up-description.up-detail-bottom');
 
-                            if (metaKeywords && metaTitle && descriptionElement && authorDescriptionElement) {
-                                const keywordsText = normalizeText(metaKeywords.getAttribute("content"));
-                                const titleText = normalizeText(metaTitle.getAttribute("content"));
-                                const descriptionText = normalizeText(descriptionElement.textContent);
-                                const authorDescText = normalizeText(authorDescriptionElement.getAttribute('title'));
+                            //console.log(`[Bilibili纯粹化-调试] 视频【${video.querySelector('.bili-video-card__info--tit')?.textContent}】的各项元素为【${metaKeywords}】【${metaTitle}】【${descriptionElement}】【${authorDescriptionElement}】`)
 
-                                const rawKeyword = currentSearchKeyword || keyword;
-                                let tokens = smartTokenize(rawKeyword);
+                            const keywordsText = metaKeywords ? normalizeText(metaKeywords.getAttribute("content")) : normalizeText(" ");
+                            const titleText = metaTitle ? normalizeText(metaTitle.getAttribute("content")) : normalizeText(" ");
+                            const descriptionText = descriptionElement ? normalizeText(descriptionElement.textContent) : normalizeText(" ");
+                            const authorDescText = authorDescriptionElement ? normalizeText(authorDescriptionElement.getAttribute('title')) : normalizeText(" ");
 
-                                // 把原搜索词整体也作为一个 token
-                                if (!tokens.includes(rawKeyword.trim())) {
-                                    tokens.unshift(rawKeyword.trim());
+                            const rawKeyword = currentSearchKeyword || keyword;
+                            let tokens = smartTokenize(rawKeyword);
+
+                            // 把原搜索词整体也作为一个 token
+                            if (!tokens.includes(rawKeyword.trim())) {
+                                tokens.unshift(rawKeyword.trim());
+                            }
+
+                            // 规范化 tokens
+                            const normTokens = tokens
+                                .map(t => normalizeText(t))
+                                .filter(t => t.length > 0);
+
+
+                            let matchTokenCount = 0;
+
+                            //console.log(`[Bilibili纯粹化-调试] 即将检查视频【${video.querySelector('.bili-video-card__info--tit')?.textContent}】中的【${keywordsText}】【${titleText}】【${descriptionText}】【${authorDescText}】中是否含有【${normTokens}】`)
+
+                            for (const token of normTokens) {
+                                if (
+                                    keywordsText.includes(token) ||
+                                    titleText.includes(token) ||
+                                    descriptionText.includes(token) ||
+                                    authorDescText.includes(token)
+                                ) {
+                                    matchTokenCount++;
                                 }
+                            }
 
-                                // 规范化 tokens
-                                const normTokens = tokens
-                                    .map(t => normalizeText(t))
-                                    .filter(t => t.length > 0);
+                            // 判断是否命中 
+                            let keepVideo = false;
 
+                            if (normTokens.length === 1) {
+                                // 单一关键词:
+                                keepVideo = matchTokenCount === 1;
+                            } else {
+                                // 多词：
+                                keepVideo = matchTokenCount >= 1;
+                            }
 
-                                let matchTokenCount = 0;
+                            //console.log(`[Bilibili纯粹化-调试] 视频【${video.querySelector('.bili-video-card__info--tit')?.textContent}】，关键词命中【${matchTokenCount}】次`)
 
-                                for (const token of normTokens) {
-                                    if (
-                                        keywordsText.includes(token) ||
-                                        titleText.includes(token) ||
-                                        descriptionText.includes(token) ||
-                                        authorDescText.includes(token)
-                                    ) {
-                                        matchTokenCount++;
-                                    }
-                                }
-
-                                // 判断是否命中 
-                                let keepVideo = false;
-
-                                if (normTokens.length === 1) {
-                                    // 单一关键词:
-                                    keepVideo = matchTokenCount === 1;
-                                } else {
-                                    // 多词：
-                                    keepVideo = matchTokenCount >= 1;
-                                }
-
-                                // 恢复视频 
-                                if (keepVideo) {
-                                    video.style.display = '';
-                                    const title = video.querySelector('.bili-video-card__info--tit')?.textContent || '';
-                                    console.log(`[Bilibili纯粹化] 在视频【${title}】的标签/简介/作者简介中命中关键词，已恢复该视频显示`);
-                                }
+                            // 恢复视频 
+                            if (keepVideo) {
+                                video.style.display = '';
+                                const title = video.querySelector('.bili-video-card__info--tit')?.textContent || '';
+                                console.log(`[Bilibili纯粹化] 在视频【${title}】的标签/简介/作者简介中命中关键词，已恢复该视频显示`);
                             }
                         },
                         onerror: function(error) {
