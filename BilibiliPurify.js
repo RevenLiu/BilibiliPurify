@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.4.6
+// @version      1.4.7
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -18,6 +18,9 @@
 // @match        https://t.bilibili.com/*
 // @match        https://live.bilibili.com/*
 // @match        https://link.bilibili.com/*
+// @match        https://account.bilibili.com/*
+// @match        https://passport.bilibili.com/*
+// @match        https://pay.bilibili.com/*
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
 // @connect      www.bilibili.com
@@ -224,7 +227,18 @@
         'div.banner-ctn',
         //直播分区页横幅广告
         'div.index_flip-view-image-ctnr_ueRWr.index_ts-dot-4_afXVm',
-        'div.index_flip-view-titles_ILDY7'
+        'div.index_flip-view-titles_ILDY7',
+        //直播站点粉丝勋章页面顶部导航栏
+        'div.mini-vip.van-popover__reference',
+        'a.link.download-client-trigger.van-popover__reference',
+        '[href="//manga.bilibili.com?from=bill_top_mnav"]',
+        '[href="//www.bilibili.com/match/home/"]',
+        '[href="//show.bilibili.com/platform/home.html?msource=pc_web"]',
+        '[href="//live.bilibili.com"]',
+        '[href="https://game.bilibili.com/platform/"]',
+        '[href="//www.bilibili.com/anime/"]',
+        'div.channel-menu-mini',
+        'svg.navbar_pullup'
     ];
 
     const cssRules = hideSelectors.map(selector =>
@@ -1759,7 +1773,8 @@ function purifyComments() {
             containerClasses: [
                 'nav-search-content',
                 'search-input-wrap.flex_between',
-                'p-relative.search-bar.over-hidden.border-box.t-nowrap'
+                'p-relative.search-bar.over-hidden.border-box.t-nowrap',
+                'nav-search'
             ],
             placeholder: '输入关键字搜索',
             removeTitle: true
