@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.4.9
+// @version      1.4.10
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -255,6 +255,32 @@
 
     // 评论区相关样式
     const commentStyles = `
+        :root {
+            --bili-purify-bg: #ffffff;
+            --bili-purify-bg-gradient: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            --bili-purify-text-main: #1a1a1a;
+            --bili-purify-text-sub: #666666;
+            --bili-purify-text-hint: #999999;
+            --bili-purify-input-bg: #fafafa;
+            --bili-purify-input-border: #e8e8e8;
+            --bili-purify-overlay: rgba(255, 255, 255, 0.95);
+            --bili-purify-dialog-shadow: rgba(0, 0, 0, 0.15);
+            --bili-purify-toggle-label: #61666d;
+        }
+
+        [data-theme='dark'] {
+            --bili-purify-bg: #18191c;
+            --bili-purify-bg-gradient: linear-gradient(135deg, #2d2e32 0%, #18191c 100%);
+            --bili-purify-text-main: #e7e9ed;
+            --bili-purify-text-sub: #9499a0;
+            --bili-purify-text-hint: #757a81;
+            --bili-purify-input-bg: #2d2e32; /* 确保深色模式下输入框也是深色 */
+            --bili-purify-input-border: #3d3e42;
+            --bili-purify-overlay: rgba(24, 25, 28, 0.95);
+            --bili-purify-dialog-shadow: rgba(0, 0, 0, 0.5);
+            --bili-purify-toggle-label: #9499a0;
+        }
+
         /* 评论区容器相对定位 */
         #comment-lock-container {
             position: relative;
@@ -267,7 +293,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(255, 255, 255, 0.95);
+            background: var(--bili-purify-overlay);
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             backdrop-filter: blur(10px);
             z-index: 999;
             display: flex;
@@ -299,7 +326,7 @@
 
         /* 提示文字 */
         #lock-hint {
-            color: #999;
+            color: var(--bili-purify-text-hint);
             font-size: 14px;
             margin-top: 20px;
             text-align: center;
@@ -328,12 +355,12 @@
 
         /* 对话框 */
         #comment-dialog {
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            background: var(--bili-purify-bg-gradient);
             border-radius: 24px;
             padding: 50px 45px;
             max-width: 520px;
             width: 90%;
-            box-shadow: 0 30px 90px rgba(0, 0, 0, 0.25);
+            box-shadow: 0 30px 90px var(--bili-purify-dialog-shadow);
             text-align: center;
             position: relative;
             overflow: hidden;
@@ -352,7 +379,7 @@
         }
 
         #comment-dialog h2 {
-            color: #1a1a1a;
+            color: var(--bili-purify-text-main);
             font-size: 22px;
             margin-bottom: 30px;
             font-weight: 600;
@@ -374,14 +401,14 @@
         }
 
         #comment-dialog p {
-            color: #666;
+            color: var(--bili-purify-text-sub);
             font-size: 15px;
             line-height: 2;
             margin: 12px 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
             opacity: 0;
         }
-        
+
         #comment-dialog p:nth-of-type(1) {
             animation: fadeInText 0.6s ease 0.4s forwards;
         }
@@ -445,18 +472,19 @@
         #reflection-input {
             width: 100%;
             padding: 14px 18px;
-            border: 2px solid #e8e8e8;
+            border: 2px solid var(--bili-purify-input-border);
             border-radius: 12px;
             font-size: 15px;
             box-sizing: border-box;
+            background-color: var(--bili-purify-input-bg) !important;
             transition: all 0.3s ease;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
-            background: #fafafa;
+            color: var(--bili-purify-text-main);
         }
 
         #reflection-input:focus {
             outline: none;
-            border-color: #00AEEC;
+            border-color: #00aeec;
             background: white;
             box-shadow: 0 0 0 3px rgba(0, 174, 236, 0.1);
         }
@@ -578,7 +606,7 @@
 
         .blur-toggle-label {
             font-size: 14px;
-            color: #61666d;
+            color: var(--bili-purify-toggle-label) !important;
             user-select: none;
         }
 
@@ -643,10 +671,10 @@
         }
 
         .blur-toggle-dialog {
-            background: white;
-            border-radius: 6px;
+            background: var(--bili-purify-bg);
+            border-radius: 6px; box-shadow: 0 8px 32px var(--bili-purify-dialog-shadow);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            max-width: 450px;
+            max-width: 450px; width: 90%;
             width: 90%;
             transform: scale(0.9);
             opacity: 0;
@@ -667,7 +695,7 @@
             margin: 0 0 12px;
             font-size: 20px;
             font-weight: 600;
-            color: #18191c;
+            color: var(--bili-purify-text-main);
             opacity: 0;
             animation: fadeInText 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.1s forwards;
         }
@@ -675,7 +703,7 @@
         .blur-toggle-dialog-message {
             margin: 0 0 24px;
             font-size: 15px;
-            color: #61666d;
+            color: var(--bili-purify-text-sub);
             line-height: 1.6;
             opacity: 0;
             animation: fadeInText 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
@@ -701,12 +729,12 @@
         }
 
         .blur-toggle-dialog-btn-cancel {
-            background-color: #f1f2f3;
-            color: #61666d;
+            background-color: var(--bili-purify-btn-cancel-bg);
+            color: var(--bili-purify-text-sub);
         }
 
         .blur-toggle-dialog-btn-cancel:hover {
-            background-color: #e3e5e7;
+            background-color: var(--bili-purify-btn-cancel-hover);
         }
 
         .blur-toggle-dialog-btn-confirm {
@@ -739,6 +767,26 @@
     GM_addStyle(cssRules + commentStyles);
 
     console.log('[Bilibili纯粹化] 样式已注入');
+
+    // 监听 B 站原生主题切换
+    function watchTheme() {
+        const themeLink = document.getElementById('__css-map__');
+        const updateTheme = () => {
+            if (!themeLink) return;
+            const isDark = themeLink.href.includes('dark.css');
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        };
+
+        if (themeLink) {
+            updateTheme();
+            // 监听 href 属性变化
+            const observer = new MutationObserver(updateTheme);
+            observer.observe(themeLink, { attributes: true, attributeFilter: ['href'] });
+        } else {
+            setTimeout(watchTheme, 500);
+        }
+    }
+    watchTheme();
 
     // 辅助函数 - 获取范围内随机整数
     function getRandomInt(min, max) {
