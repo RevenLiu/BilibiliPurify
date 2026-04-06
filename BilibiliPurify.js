@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.4.14
+// @version      1.4.15
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -97,6 +97,8 @@
         //评分弹幕及小图片 (视频内)
         'div.bili-danmaku-x-score.bili-danmaku-x-show',
         'div.bili-danmaku-x-cmd-shrink.bili-danmaku-x-show',
+        //流畅度反馈弹窗 (视频内)
+        'div.bpx-player-qoeFeedback.bpx-player-qoeFeedback-score',
         //动态页面热搜
         'div.bili-dyn-search-trendings',
         //剧播放页推荐列表
