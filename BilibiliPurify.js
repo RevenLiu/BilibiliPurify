@@ -2,8 +2,8 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      1.4.15
-// @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、评论区反成瘾/情绪控制锁等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
+// @version      2.0.0
+// @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、隐藏评论区等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
 // @icon         https://raw.githubusercontent.com/RevenLiu/BilibiliPurify/main/Icon.png
@@ -22,6 +22,7 @@
 // @match        https://passport.bilibili.com/*
 // @match        https://pay.bilibili.com/*
 // @match        https://music.bilibili.com/*
+// @match        https://member.bilibili.com/*
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
 // @connect      www.bilibili.com
@@ -38,8 +39,251 @@
         return;
     }
 
+    // 热度榜页重定向逻辑
+    if (window.location.hostname === 'www.bilibili.com' && window.location.pathname.includes("/popular/")) {
+        window.location.replace('https://search.bilibili.com/');
+        return;
+    }
+
     // 使用 CSS 隐藏元素
     const hideSelectors = [
+        // ===== v2.0.0 =====
+
+        //信封红点
+        'div.red-num--message',
+        //视频页评论区
+        '#commentapp',
+        //番剧页评论区
+        '#comment-body',
+        //番剧放映室评论区
+        '#comment_module',
+        //专栏评论区
+        '#comment-wrapper',
+        //音频页评论区
+        '#song-comment',
+
+        //小黑屋评论区
+        'div.comment-wrap',
+        //小黑屋列表评论条数文字
+        'p.comment',
+
+        //文章内部评论区
+        'div.bili-tabs.opus-tabs',
+        'div.bili-tabs__content',
+        'div.bili-tabs.dyn-tabs',
+        //文章内部评论按钮
+        'div.side-toolbar__action.comment',
+        //文章内部交互数值信息
+        'div.side-toolbar__action__text',
+        //文章内部作者编号装扮
+        'div.opus-module-author__decorate',
+        //文章内作者头像框
+        'div[class="b-avatar__layer center"][data-layer-tag="PENDENT_LAYER"]',
+
+        //顶部栏回复、点赞、@按钮
+        'a[href$="reply"]',
+        'a[href$="love"]',
+        'a[href$="at"]',
+        //顶部栏等级图标
+        'div.vip-item',
+        //老顶部栏个人头像对话框粉丝显示
+        'a.count-item[href$="fans"]',
+        //老顶部栏个人头像对话框等级
+        'div.level-content',
+
+        //各类视频条底部按钮
+        'div.bili-dyn-item__action',
+        //视频页交互数值信息
+        'span.video-like-info.video-toolbar-item-text',
+        'span.video-coin-info.video-toolbar-item-text',
+        'span.video-fav-info.video-toolbar-item-text',
+        'span.video-share-info.video-toolbar-item-text',
+        'div.video-share-info.video-toolbar-item-text',
+        //视频页正在观看人数文字
+        //视频页已装填弹幕文字
+        'div.bpx-player-video-info',
+        //视频页up主社交数值显示
+        'p.social',
+        //视频页up主会员图标
+        'span.user-label',
+        //视频页up主认证图标
+        'img.official-icon',
+        //视频页up主头像框
+        'div.bili-avatar-pendent-dom',
+        //视频页up主头像直播显示
+        'div.live-mask',
+        'div.live-cycle',
+        //视频页面笔记点赞量
+        'div.note-like',
+        //视频页面笔记用户等级图标
+        'div.up-level-icon.svg-icon',
+        'div.up-level.svg-icon',
+        //视频页面笔记详情用户粉丝量
+        'div.up-fans',
+        //视频页面笔记详情交互数据显示
+        'span.tab-num',
+        //稍后再看播放页列表播放数
+        'div.views',
+        //视频页播放量显示
+        'div.view.item',
+        //视频页弹幕量显示
+        'div.dm.item',
+        //视频页充电popup人数显示
+        'div.count-people',
+        //视频页列表/合集总播放量
+        'div.total-view',
+        //视频页老粉图标
+        'div.triple-oldfan-entry',
+        //视频页平台认证文字
+        'div.official-wrapper',
+
+        //直播页看过和点赞数
+        'div[class="icon-ctnr live-skin-normal-a-text"]',
+        'div[class="icon-ctnr live-skin-normal-a-text not-hover"]',
+        //直播页人数列表
+        'div.rank-list-section',
+        //直播页大航海popup人数显示
+        'div[class="total flex"]',
+        //直播页人员进入提示
+        '#brush-prompt',
+        //直播分区列表眼睛数值
+        'div[class*="Item_watched_wrap"]',
+        'div[class*="Item_onlineCount"]',
+        //直播页chat房管图标
+        'div.admin-icon.dp-i-block.p-relative.v-middle',
+        //直播页抽奖popup
+        'div.lottery-user-container',
+        //直播页up主认证图标
+        'div.blive-avatar-icons',
+        'div.blive-avatar-icon',
+
+        //动态页视频播发量弹幕量显示
+        'div.bili-dyn-card-video__stat__item',
+        //动态页自身粉丝数量显示
+        'a.bili-dyn-my-info__stat__item[href$="fans/fans"]',
+        //动态页自身等级图标
+        'div.info__icon',
+        //动态页他人社交数据
+        'div.bili-user-profile-view__info__stats',
+        //动态页他人大会员图标
+        'div.bili-user-profile-view__info__level',
+        'div.bili-user-profile-view__info__viplabel',
+        //动态页他人头像认证图标
+        'span.bili-user-profile-view__avatar__icon',
+        'i.officialverify--0',
+        'i.officialverify--1',
+        //动态页认证文字
+        'div.bili-user-profile-view__info__officialverify',
+        //动态页话题社交数据
+        'div.bili-topic-item__cloud__desc',
+        
+        //搜索页视频播放量弹幕量显示
+        'span.bili-video-card__stats--item',
+        //搜索页番剧评分
+        'div.score.media-card-content-footer-score',
+        //搜索页直播眼睛数值
+        'div.bili-live-card__stats--item',
+        //搜索页等级图标
+        'svg.level-icon',
+        //搜索页账号验证图标
+        'span.bili-avatar-icon.bili-avatar-right-icon',
+        //搜索页游戏/课程/活动广告
+        'div.activity-game-list.i_wrapper.search-all-list',
+
+
+        //番剧页评分及数值信息
+        'div.media-info-datas',
+        //番剧页承包榜
+        'div.media-sponsor-wrapper.clearfix',
+        //番剧页点评
+        'div.bangumi-media',
+        //番剧播放页评分
+        'div.mediainfo_mediaRating__C5uvV',
+        //番剧播放页数值信息
+        'div.mediainfo_mediaDesc__jjRiB[style="margin-bottom:12px"]',
+        //番剧放映厅数值显示
+        'div.media-count',
+        //番剧放映厅顶部栏广告
+        'a[href$="/relation/fans"]',
+        'div.loc-mc-box',
+
+        //个人主页导航栏
+        "a.active.router-link-exact-active.nav-statistics__item.jumpable",
+        "div.nav-statistics__item",
+        //个人主页 关注者社交数据
+        "#follow",
+        "#fans",
+        //个人主页等级图标 (视频页up主等级图标)
+        "a.level",
+        //个人主页大会员图标
+        "div.vip",
+        //个人空间头像直播状态
+        'a.live-ani',
+        //个人主页粉丝勋章
+        "div.fans-medal",
+        //个人主页充电数
+        "div.elec-status__count",
+        //个人主页游戏
+        'div.game-section',
+        //个人主页动态编号装扮
+        'div.bili-dyn-item__ornament',
+        //个人主页头像大会员图标
+        'div[class="b-avatar__layer"]',
+        //个人空间右侧平台认证
+        'div.auth-section',
+        //个人主页最近点赞视频列表
+        'div.like-section',
+        //个人主页最近投币视频列表
+        'div.coin-section',
+        //个人空间右侧视频预约人数
+        '#app > main > div.space-home > div.aside > div:nth-child(3) > div > div.aside-card__content > div > div.subscribe-section-warp > div > div.subscribe-item-subtitle > div',
+
+
+        //私信页头像认证图标
+        'div[class="bili-avatar__layer"]',
+
+        //专栏内部悬浮工具栏数值显示
+        "span.toolbar-item__num",
+        //专栏内部粉丝数
+        'span.fans',
+        'span.fans-num',
+        //专栏内部文章数
+        'span.view',
+        'span.view-num',
+        //专栏页专栏数据显示
+        'div.article-item__stats',
+        //专栏内部作者等级
+        'span.level',
+        //专栏内部作者勋章
+        'div.nameplate-holder',
+        //专栏文集页面社交数据
+        'div.view',
+        'div[class="like"]',
+        'div.reply',
+        //专栏文集页面作者勋章图标
+        'img.nameplate',
+
+        //音频页播放量
+        'div.song-play-num',
+        //音频页收听/关注显示
+        'div.follow-num.clearfix',
+        //音频页按钮数据显示
+        'span.song-share > div',
+
+        //游戏赛事详情页评论区
+        'div.match-comment-wrap',
+
+        //话题页社交数据
+        'div.action-module',
+        'div.topic-title.title-gap > span',
+        //话题页活动广告
+        'div.active-card',
+
+        //迷你评论区/点赞文字 (包括动态页，话题页等)
+        'div.bili-dyn-item__interaction',
+        
+        // =====           =====
+
         //左上入口栏广告
         'li.v-popover-wrap.left-loc-entry',
         //视频页右侧小广告
@@ -64,8 +308,6 @@
         'div.activity-m-v1.act-now',
         //视频页音乐标签点击后视频推荐列表
         'div._pcDetailCardList_0f3be_6',
-        //视频页话题标签
-        'div.topic-tag',
         //热搜
         'div.trending',
         //搜索页封面播放器
@@ -265,8 +507,8 @@
          }`
     ).join('\n');
 
-    // 评论区相关样式
-    const commentStyles = `
+    // 相关样式
+    const Styles = `
         :root {
             --bili-purify-bg: #ffffff;
             --bili-purify-bg-gradient: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
@@ -291,258 +533,6 @@
             --bili-purify-overlay: rgba(24, 25, 28, 0.95);
             --bili-purify-dialog-shadow: rgba(0, 0, 0, 0.5);
             --bili-purify-toggle-label: #9499a0;
-        }
-
-        /* 评论区容器相对定位 */
-        #comment-lock-container {
-            position: relative;
-        }
-
-        /* 遮罩层 - 覆盖在评论区上方 */
-        #comment-lock-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--bili-purify-overlay);
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            backdrop-filter: blur(10px);
-            z-index: 999;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            padding-top: 40px;
-            align-items: center;
-            min-height: 400px;
-        }
-
-        /* 解锁按钮 */
-        #unlock-comment-btn {
-            padding: 16px 32px;
-            background: linear-gradient(135deg, #00aeec 0%, #0098D1 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 8px 20px rgba(0, 152, 209, 0.4);
-            transition: all 0.3s ease;
-        }
-
-        #unlock-comment-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 30px rgba(0, 152, 209, 0.4);
-        }
-
-        /* 提示文字 */
-        #lock-hint {
-            color: var(--bili-purify-text-hint);
-            font-size: 14px;
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        /* 对话框遮罩 */
-        #comment-dialog-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.75);
-            z-index: 10000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(8px);
-            animation: fadeIn 0.3s ease;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        /* 对话框 */
-        #comment-dialog {
-            background: var(--bili-purify-bg-gradient);
-            border-radius: 24px;
-            padding: 50px 45px;
-            max-width: 520px;
-            width: 90%;
-            box-shadow: 0 30px 90px var(--bili-purify-dialog-shadow);
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-            animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        
-        @keyframes slideUp {
-            from {
-                transform: translateY(30px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        #comment-dialog h2 {
-            color: var(--bili-purify-text-main);
-            font-size: 22px;
-            margin-bottom: 30px;
-            font-weight: 600;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-            letter-spacing: 0.5px;
-            opacity: 0;
-            animation: fadeInText 0.6s ease 0.2s forwards;
-        }
-        
-        @keyframes fadeInText {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        #comment-dialog p {
-            color: var(--bili-purify-text-sub);
-            font-size: 15px;
-            line-height: 2;
-            margin: 12px 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-            opacity: 0;
-        }
-
-        #comment-dialog p:nth-of-type(1) {
-            animation: fadeInText 0.6s ease 0.4s forwards;
-        }
-        
-        #comment-dialog p:nth-of-type(2) {
-            animation: fadeInText 0.6s ease 0.6s forwards;
-        }
-
-        #comment-dialog p:last-of-type {
-            color: #00AEEC;
-            font-weight: 600;
-            margin-top: 25px;
-            font-size: 16px;
-            animation: fadeInText 0.6s ease 0.8s forwards;
-        }
-
-        /* 倒计时 */
-        #countdown {
-            font-size: 72px;
-            font-weight: 300;
-            color: #00AEEC;
-            margin: 40px 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            line-height: 1;
-            animation: pulse 1s ease infinite;
-            text-shadow: 0 2px 10px rgba(0, 174, 236, 0.2);
-        }
-        
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-            50% {
-                transform: scale(1.05);
-                opacity: 0.9;
-            }
-        }
-        
-        #countdown.completed {
-            animation: none;
-            color: #52c41a;
-            font-size: 64px;
-        }
-
-        /* 输入区域 */
-        #input-area {
-            margin-top: 35px;
-            opacity: 0.3;
-            pointer-events: none;
-            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-            transform: translateY(10px);
-        }
-
-        #input-area.unlocked {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translateY(0);
-        }
-
-        #reflection-input {
-            width: 100%;
-            padding: 14px 18px;
-            border: 2px solid var(--bili-purify-input-border);
-            border-radius: 12px;
-            font-size: 15px;
-            box-sizing: border-box;
-            background-color: var(--bili-purify-input-bg) !important;
-            transition: all 0.3s ease;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
-            color: var(--bili-purify-text-main);
-        }
-
-        #reflection-input:focus {
-            outline: none;
-            border-color: #00aeec;
-            background: white;
-            box-shadow: 0 0 0 3px rgba(0, 174, 236, 0.1);
-        }
-
-        #confirm-btn {
-            margin-top: 18px;
-            padding: 14px 36px;
-            background: linear-gradient(135deg, #00AEEC 0%, #0098D1 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 174, 236, 0.3);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
-        }
-
-        #confirm-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 174, 236, 0.4);
-        }
-        
-        #confirm-btn:active:not(:disabled) {
-            transform: translateY(0);
-        }
-
-        #confirm-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        #error-msg {
-            color: #ff4d4f;
-            font-size: 13px;
-            margin-top: 12px;
-            min-height: 20px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
-            animation: shake 0.5s ease;
-        }
-        
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
         }
 
         /* 搜索页视频封面遮罩层 */
@@ -776,7 +766,7 @@
 
     
     // 注入所有 CSS
-    GM_addStyle(cssRules + commentStyles);
+    GM_addStyle(cssRules + Styles);
 
     console.log('[Bilibili纯粹化] 样式已注入');
 
@@ -814,775 +804,107 @@
         .toLowerCase()
         .normalize('NFKC')                   // 统一全角半角
         .replace(/[\s\-_]+/g, '')            // 去掉空格/下划线/横线等分隔符
-}
+    }
 
+    /**
+     * 自动检测并删除指定元素的特定 Class
+     * @param {string} selector - CSS 选择器
+     * @param {string} classToRemove - 需要移除的类名
+     */
+    function observeAndRemoveClass(selector, classToRemove) {
+        const processElements = () => {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(el => {
+                if (el.classList.contains(classToRemove)) {
+                    el.classList.remove(classToRemove);
+                }
+            });
+        };
 
+        processElements();
 
-// 评论区净化功能 - 移除超链接、点赞数、UP主点赞标识、用户装饰
-function purifyComments() {
-    //console.log('[Bilibili纯粹化-调试] purifyComments 函数被调用');
-    
-    let processedCount = {
-        searchLinks: 0,
-        likeCounts: 0,
-        upTags: 0,
-        userStyles: 0,
-        userLevels: 0,
-        sailingCards: 0,
-        avatarLayers: 0
-    };
-    
-    // 存储所有观察器
-    const observers = new Set();
-    
-    // 处理评论中的搜索关键词超链接
-    function processSearchLinks(richText) {
-        if (!richText || !richText.shadowRoot) return;
-        
-        const contents = richText.shadowRoot.querySelector('#contents');
-        if (!contents) return;
-        
-        const searchLinks = contents.querySelectorAll('a[data-type="search"]');
-        
-        searchLinks.forEach(link => {
-            const span = document.createElement('span');
-            span.textContent = link.textContent;
-            span.className = link.className;
-            link.parentNode.replaceChild(span, link);
-            //processedCount.searchLinks++;
-            
-            const img = span.querySelector('img');
-            if (img) {
-                img.style.display = 'none';
-            }
-        });
-    }
-    
-    // 隐藏点赞数量
-    function hideLikeCount(actionButtons) {
-        if (!actionButtons || !actionButtons.shadowRoot) return;
-        
-        const likeDiv = actionButtons.shadowRoot.querySelector('#like');
-        if (!likeDiv) return;
-        
-        const countSpan = likeDiv.querySelector('button #count');
-        if (countSpan) {
-            countSpan.style.display = 'none';
-            //processedCount.likeCounts++;
-        }
-    }
-    
-    // 隐藏UP主点赞标识
-    function hideUpLikeTags(mainDiv) {
-        if (!mainDiv) return;
-        
-        const tagsDiv = mainDiv.querySelector('#tags');
-        if (tagsDiv) {
-            tagsDiv.style.display = 'none';
-            //processedCount.upTags++;
-        }
-    }
-    
-    // 净化用户信息（移除用户名样式、隐藏等级）
-    function purifyUserInfo(userInfo) {
-        if (!userInfo || !userInfo.shadowRoot) return;
-        
-        const infoDiv = userInfo.shadowRoot.querySelector('#info');
-        if (!infoDiv) return;
-        
-        // 移除用户名的 style 属性
-        const userNameDiv = infoDiv.querySelector('#user-name');
-        if (userNameDiv) {
-            const userNameLink = userNameDiv.querySelector('a');
-            if (userNameLink && userNameLink.hasAttribute('style')) {
-                userNameLink.removeAttribute('style');
-                //processedCount.userStyles++;
-            }
-        }
-        
-        // 隐藏用户等级
-        const userLevelDiv = infoDiv.querySelector('#user-level');
-        if (userLevelDiv && userLevelDiv.style.display !== 'none') {
-            userLevelDiv.style.display = 'none';
-            //processedCount.userLevels++;
-        }
-
-        // 隐藏用户勋章
-        const userMedalDiv = infoDiv.querySelector('#user-medal');
-        if (userMedalDiv && userMedalDiv.style.display !== 'none') {
-            userMedalDiv.style.display = 'none';
-        }
-    }
-    
-    // 隐藏用户装扮卡片
-    function removeSailingCard(header) {
-        if (!header) return;
-        const sailingCard = header.querySelector('bili-comment-user-sailing-card');
-        if (sailingCard) {
-            sailingCard.style.display = 'none';
-            //processedCount.sailingCards++;
-        }
-    }
-    
-    // 隐藏头像装饰层
-    function hideAvatarLayers(avatar) {
-        if (!avatar || !avatar.shadowRoot) return;
-        
-        const canvasDiv = avatar.shadowRoot.querySelector('#canvas');
-        if (!canvasDiv) return;
-        
-        // 隐藏 class="layer" 的 div (大会员标志)
-        const layers = canvasDiv.querySelectorAll('.layer');
-        layers.forEach(layer => {
-            if(!layer.classList.contains('center')){
-                if (layer.style.display !== 'none') {
-                layer.style.display = 'none';
-                //processedCount.avatarLayers++;
-            }
-            }
-        });
-        
-        // 隐藏 class="layer-res" 且没有 style 属性的 div，并隐藏其他layer-res的style (头像框)
-        const layerRes = canvasDiv.querySelectorAll('.layer-res');
-        layerRes.forEach(res => {
-            if (!res.hasAttribute('style') && res.style.display !== 'none') {
-                res.style.display = 'none';
-                //processedCount.avatarLayers++;
-            }
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach(() => {
+                processElements();
+            });
         });
 
-        //另一种头像框 在隐藏头像框的同时统一头像大小 (可能是动态头像框?)
-        const layerCenter = canvasDiv.querySelectorAll('.layer.center');
-        layerCenter.forEach(layer => {
-            if(layer.style.width == '66px'){
-                layer.style.display = 'none';
-            }else if(layer.style.width !== '48px'){
-                layer.style.width = '48px';
-                layer.style.height = '48px';
-            }
-        })
+        observer.observe(document.documentElement, {
+            childList: true,
+            subtree: true
+        });
+    }
 
-    }
-    
-    // 处理用户头像
-    function processUserAvatar(bodyDiv) {
-        if (!bodyDiv) return;
-        
-        const avatarLink = bodyDiv.querySelector('#user-avatar');
-        if (!avatarLink) return;
-        
-        const avatar = avatarLink.querySelector('bili-avatar');
-        if (avatar) {
-            hideAvatarLayers(avatar);
-            
-            // 监听 avatar 的 shadowRoot
-            if (avatar.shadowRoot) {
-                observeShadowRoot(avatar.shadowRoot, () => {
-                    hideAvatarLayers(avatar);
-                });
-            }
-        }
-    }
-    
-    // 为 Shadow Root 设置观察器
-    function observeShadowRoot(shadowRoot, callback) {
-        if (!shadowRoot) return null;
-        
-        const observer = new MutationObserver(callback);
-        observer.observe(shadowRoot, {
+    /**
+     * 自动检测并修改指定元素的 Style
+     * @param {string} selector - CSS 选择器
+     * @param {Object} stylesToApply - 样式对象
+     */
+    function observeAndApplyStyle(selector, stylesToApply) {
+        const processElements = () => {
+            const elements = document.querySelectorAll(selector);
+            const styleKeys = Object.keys(stylesToApply);
+
+            elements.forEach(el => {
+                if (styleKeys.length === 0) {
+                    if (el.getAttribute('style') !== null && el.getAttribute('style') !== "") {
+                        el.style.cssText = "";
+                    }
+                } else {
+                    styleKeys.forEach(key => {
+                        if (el.style[key] !== stylesToApply[key]) {
+                            el.style[key] = stylesToApply[key];
+                        }
+                    });
+                }
+            });
+        };
+
+        processElements();
+
+        const observer = new MutationObserver((mutations) => {
+            processElements();
+        });
+
+        observer.observe(document.documentElement, {
             childList: true,
             subtree: true,
-            attributes: true
+            attributes: true,
+            attributeFilter: ['style']
         });
-        
-        observers.add(observer);
-        return observer;
     }
-    
-    // 处理单个评论
-    function processComment(commentRenderer) {
-        if (!commentRenderer || !commentRenderer.shadowRoot) return;
-        
-        // 监听 commentRenderer 的 shadowRoot
-        observeShadowRoot(commentRenderer.shadowRoot, () => {
-            const body = commentRenderer.shadowRoot.querySelector('#body');
-            if (!body) return;
-            
-            const main = body.querySelector('#main');
-            if (!main) return;
-            
-            // 处理评论内容
-            const content = main.querySelector('#content');
-            if (content) {
-                const richText = content.querySelector('bili-rich-text');
-                processSearchLinks(richText);
-                
-                // 监听 richText 的 shadowRoot
-                if (richText && richText.shadowRoot) {
-                    observeShadowRoot(richText.shadowRoot, () => {
-                        processSearchLinks(richText);
-                    });
-                }
-            }
-            
-            // 处理用户信息
-            const header = main.querySelector('#header');
-            if (header) {
-                const userInfo = header.querySelector('bili-comment-user-info');
-                if (userInfo) {
-                    purifyUserInfo(userInfo);
-                    removeSailingCard(header);
-                    
-                    // 监听 userInfo 的 shadowRoot
-                    if (userInfo.shadowRoot) {
-                        observeShadowRoot(userInfo.shadowRoot, () => {
-                            purifyUserInfo(userInfo);
-                        });
+
+    /**
+     * 监听并执行自定义逻辑
+     * @param {string} selector - CSS 选择器
+     * @param {function} callback - 找到元素后执行的回调函数
+     */
+    function observeAndExecute(selector, callback) {
+        const processElement = (el) => {
+            callback(el);
+
+            const textObserver = new MutationObserver(() => {
+                textObserver.disconnect();
+                callback(el);
+                textObserver.observe(el, { childList: true, characterData: true, subtree: true });
+            });
+
+            textObserver.observe(el, { childList: true, characterData: true, subtree: true });
+        };
+
+        const mainObserver = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+                mutation.addedNodes.forEach(node => {
+                    if (node.nodeType === 1) {
+                        if (node.matches(selector)) processElement(node);
+                        node.querySelectorAll(selector).forEach(el => processElement(el));
                     }
-                }
-            }
-            
-            // 处理用户头像
-            processUserAvatar(body);
-            
-            const footer = main.querySelector('#footer');
-            if (footer) {
-                const actionButtons = footer.querySelector('bili-comment-action-buttons-renderer');
-                hideLikeCount(actionButtons);
-                
-                // 监听 actionButtons 的 shadowRoot
-                if (actionButtons && actionButtons.shadowRoot) {
-                    observeShadowRoot(actionButtons.shadowRoot, () => {
-                        hideLikeCount(actionButtons);
-                    });
-                }
-            }
-            
-            hideUpLikeTags(main);
-        });
-        
-        // 立即执行一次处理
-        const body = commentRenderer.shadowRoot.querySelector('#body');
-        if (!body) return;
-        
-        const main = body.querySelector('#main');
-        if (!main) return;
-        
-        const content = main.querySelector('#content');
-        if (content) {
-            const richText = content.querySelector('bili-rich-text');
-            processSearchLinks(richText);
-            
-            if (richText && richText.shadowRoot) {
-                observeShadowRoot(richText.shadowRoot, () => {
-                    processSearchLinks(richText);
                 });
             }
-        }
-        
-        const header = main.querySelector('#header');
-        if (header) {
-            const userInfo = header.querySelector('bili-comment-user-info');
-            if (userInfo) {
-                purifyUserInfo(userInfo);
-                removeSailingCard(header);
-                
-                if (userInfo.shadowRoot) {
-                    observeShadowRoot(userInfo.shadowRoot, () => {
-                        purifyUserInfo(userInfo);
-                    });
-                }
-            }
-        }
-        
-        processUserAvatar(body);
-        
-        const footer = main.querySelector('#footer');
-        if (footer) {
-            const actionButtons = footer.querySelector('bili-comment-action-buttons-renderer');
-            hideLikeCount(actionButtons);
-            
-            if (actionButtons && actionButtons.shadowRoot) {
-                observeShadowRoot(actionButtons.shadowRoot, () => {
-                    hideLikeCount(actionButtons);
-                });
-            }
-        }
-        
-        hideUpLikeTags(main);
-    }
-    
-    // 处理楼中楼回复
-    function processReplies(repliesRenderer) {
-        if (!repliesRenderer || !repliesRenderer.shadowRoot) return;
-        
-        // 监听 repliesRenderer 的 shadowRoot
-        observeShadowRoot(repliesRenderer.shadowRoot, () => {
-            const expander = repliesRenderer.shadowRoot.querySelector('#expander');
-            if (!expander) return;
-            
-            const expanderContents = expander.querySelector('#expander-contents');
-            if (!expanderContents) return;
-            
-            const replyRenderers = expanderContents.querySelectorAll('bili-comment-reply-renderer');
-            
-            replyRenderers.forEach(replyRenderer => {
-                if (!replyRenderer.shadowRoot) return;
-                
-                // 监听每个 replyRenderer 的 shadowRoot
-                observeShadowRoot(replyRenderer.shadowRoot, () => {
-                    const body = replyRenderer.shadowRoot.querySelector('#body');
-                    if (!body) return;
-                    
-                    const main = body.querySelector('#main');
-                    if (!main) return;
-                    
-                    const richText = main.querySelector('bili-rich-text');
-                    processSearchLinks(richText);
-                    
-                    if (richText && richText.shadowRoot) {
-                        observeShadowRoot(richText.shadowRoot, () => {
-                            processSearchLinks(richText);
-                        });
-                    }
-                    
-                    // 处理楼中楼的用户信息
-                    const userInfo = main.querySelector('bili-comment-user-info');
-                    if (userInfo) {
-                        purifyUserInfo(userInfo);
-                        
-                        if (userInfo.shadowRoot) {
-                            observeShadowRoot(userInfo.shadowRoot, () => {
-                                purifyUserInfo(userInfo);
-                            });
-                        }
-                    }
-                    
-                    const footer = body.querySelector('#footer');
-                    if (footer) {
-                        const actionButtons = footer.querySelector('bili-comment-action-buttons-renderer');
-                        hideLikeCount(actionButtons);
-                        
-                        if (actionButtons && actionButtons.shadowRoot) {
-                            observeShadowRoot(actionButtons.shadowRoot, () => {
-                                hideLikeCount(actionButtons);
-                            });
-                        }
-                    }
-                });
-                
-                // 立即执行一次处理
-                const body = replyRenderer.shadowRoot.querySelector('#body');
-                if (!body) return;
-                
-                const main = body.querySelector('#main');
-                if (!main) return;
-                
-                const richText = main.querySelector('bili-rich-text');
-                processSearchLinks(richText);
-                
-                if (richText && richText.shadowRoot) {
-                    observeShadowRoot(richText.shadowRoot, () => {
-                        processSearchLinks(richText);
-                    });
-                }
-                
-                const userInfo = main.querySelector('bili-comment-user-info');
-                if (userInfo) {
-                    purifyUserInfo(userInfo);
-                    
-                    if (userInfo.shadowRoot) {
-                        observeShadowRoot(userInfo.shadowRoot, () => {
-                            purifyUserInfo(userInfo);
-                        });
-                    }
-                }
-                
-                const footer = body.querySelector('#footer');
-                if (footer) {
-                    const actionButtons = footer.querySelector('bili-comment-action-buttons-renderer');
-                    hideLikeCount(actionButtons);
-                    
-                    if (actionButtons && actionButtons.shadowRoot) {
-                        observeShadowRoot(actionButtons.shadowRoot, () => {
-                            hideLikeCount(actionButtons);
-                        });
-                    }
-                }
-            });
-        });
-        
-        // 立即执行一次处理
-        const expander = repliesRenderer.shadowRoot.querySelector('#expander');
-        if (!expander) return;
-        
-        const expanderContents = expander.querySelector('#expander-contents');
-        if (!expanderContents) return;
-        
-        const replyRenderers = expanderContents.querySelectorAll('bili-comment-reply-renderer');
-        
-        replyRenderers.forEach(replyRenderer => {
-            if (!replyRenderer.shadowRoot) return;
-            
-            observeShadowRoot(replyRenderer.shadowRoot, () => {
-                const body = replyRenderer.shadowRoot.querySelector('#body');
-                if (!body) return;
-                
-                const main = body.querySelector('#main');
-                if (!main) return;
-                
-                const richText = main.querySelector('bili-rich-text');
-                processSearchLinks(richText);
-                
-                if (richText && richText.shadowRoot) {
-                    observeShadowRoot(richText.shadowRoot, () => {
-                        processSearchLinks(richText);
-                    });
-                }
-                
-                const userInfo = main.querySelector('bili-comment-user-info');
-                if (userInfo) {
-                    purifyUserInfo(userInfo);
-                    
-                    if (userInfo.shadowRoot) {
-                        observeShadowRoot(userInfo.shadowRoot, () => {
-                            purifyUserInfo(userInfo);
-                        });
-                    }
-                }
-                
-                const footer = body.querySelector('#footer');
-                if (footer) {
-                    const actionButtons = footer.querySelector('bili-comment-action-buttons-renderer');
-                    hideLikeCount(actionButtons);
-                    
-                    if (actionButtons && actionButtons.shadowRoot) {
-                        observeShadowRoot(actionButtons.shadowRoot, () => {
-                            hideLikeCount(actionButtons);
-                        });
-                    }
-                }
-            });
-            
-            const body = replyRenderer.shadowRoot.querySelector('#body');
-            if (!body) return;
-            
-            const main = body.querySelector('#main');
-            if (!main) return;
-            
-            const richText = main.querySelector('bili-rich-text');
-            processSearchLinks(richText);
-            
-            if (richText && richText.shadowRoot) {
-                observeShadowRoot(richText.shadowRoot, () => {
-                    processSearchLinks(richText);
-                });
-            }
-            
-            const userInfo = main.querySelector('bili-comment-user-info');
-            if (userInfo) {
-                purifyUserInfo(userInfo);
-                
-                if (userInfo.shadowRoot) {
-                    observeShadowRoot(userInfo.shadowRoot, () => {
-                        purifyUserInfo(userInfo);
-                    });
-                }
-            }
-            
-            const footer = body.querySelector('#footer');
-            if (footer) {
-                const actionButtons = footer.querySelector('bili-comment-action-buttons-renderer');
-                hideLikeCount(actionButtons);
-                
-                if (actionButtons && actionButtons.shadowRoot) {
-                    observeShadowRoot(actionButtons.shadowRoot, () => {
-                        hideLikeCount(actionButtons);
-                    });
-                }
-            }
-        });
-    }
-    
-    // 处理所有评论线程
-    function processAllComments() {
-        const biliComments = document.querySelector('bili-comments');
-        if (!biliComments || !biliComments.shadowRoot) return false;
-        
-        const contents = biliComments.shadowRoot.querySelector('#contents');
-        if (!contents) return false;
-        
-        const feed = contents.querySelector('#feed');
-        if (!feed) return false;
-        
-        const threads = feed.querySelectorAll('bili-comment-thread-renderer');
-        
-        threads.forEach((thread, index) => {
-            if (!thread.shadowRoot) return;
-            
-            // 监听每个 thread 的 shadowRoot
-            observeShadowRoot(thread.shadowRoot, () => {
-                const commentRenderer = thread.shadowRoot.querySelector('bili-comment-renderer');
-                if (commentRenderer) {
-                    processComment(commentRenderer);
-                }
-                
-                const replies = thread.shadowRoot.querySelector('#replies');
-                if (replies) {
-                    const repliesRenderer = replies.querySelector('bili-comment-replies-renderer');
-                    if (repliesRenderer) {
-                        processReplies(repliesRenderer);
-                    }
-                }
-            });
-            
-            // 立即执行一次处理
-            const commentRenderer = thread.shadowRoot.querySelector('bili-comment-renderer');
-            if (commentRenderer) {
-                processComment(commentRenderer);
-            }
-            
-            const replies = thread.shadowRoot.querySelector('#replies');
-            if (replies) {
-                const repliesRenderer = replies.querySelector('bili-comment-replies-renderer');
-                if (repliesRenderer) {
-                    processReplies(repliesRenderer);
-                }
-            }
-        });
-        
-        // if (processedCount.searchLinks > 0 || processedCount.likeCounts > 0 || processedCount.upTags > 0 || 
-        //     processedCount.userStyles > 0 || processedCount.userLevels > 0 || processedCount.sailingCards > 0 || 
-        //     processedCount.avatarLayers > 0) {
-        //     console.log(`[Bilibili纯粹化-调试] 本次处理完成 - 搜索链接: ${processedCount.searchLinks}, 点赞数: ${processedCount.likeCounts}, UP标识: ${processedCount.upTags}, 用户名样式: ${processedCount.userStyles}, 用户等级: ${processedCount.userLevels}, 装扮卡片: ${processedCount.sailingCards}, 头像装饰: ${processedCount.avatarLayers}`);
-        // }
-        
-        // processedCount = {
-        //     searchLinks: 0,
-        //     likeCounts: 0,
-        //     upTags: 0,
-        //     userStyles: 0,
-        //     userLevels: 0,
-        //     sailingCards: 0,
-        //     avatarLayers: 0
-        // };
-        
-        return true;
-    }
-    
-    // 监听评论区变化
-    function observeComments(retryCount = 0) {
-        const maxRetries = 20;
-        
-        const biliComments = document.querySelector('bili-comments');
-        if (!biliComments) {
-            if (retryCount < maxRetries) {
-                setTimeout(() => observeComments(retryCount + 1), 500);
-            }
-            return;
-        }
-        
-        if (!biliComments.shadowRoot) {
-            if (retryCount < maxRetries) {
-                setTimeout(() => observeComments(retryCount + 1), 500);
-            }
-            return;
-        }
-        
-        // 监听 biliComments 的 shadowRoot
-        observeShadowRoot(biliComments.shadowRoot, () => {
-            processAllComments();
-        });
-        
-        function waitForContents(contentRetryCount = 0) {
-            const maxContentRetries = 20;
-            
-            const contents = biliComments.shadowRoot.querySelector('#contents');
-            if (!contents) {
-                if (contentRetryCount < maxContentRetries) {
-                    setTimeout(() => waitForContents(contentRetryCount + 1), 500);
-                }
-                return;
-            }
-            
-            // 监听 contents
-            observeShadowRoot(contents, () => {
-                processAllComments();
-            });
-            
-            function waitForFeed(feedRetryCount = 0) {
-                const maxFeedRetries = 20;
-                
-                const feed = contents.querySelector('#feed');
-                if (!feed) {
-                    if (feedRetryCount < maxFeedRetries) {
-                        setTimeout(() => waitForFeed(feedRetryCount + 1), 500);
-                    }
-                    return;
-                }
-                
-                //console.log('[Bilibili纯粹化-调试] #feed 已找到,开始初始处理和监听');
-                
-                // 监听 feed
-                observeShadowRoot(feed, () => {
-                    processAllComments();
-                });
-                
-                // 初始处理
-                processAllComments();
-                
-                console.log('[Bilibili纯粹化] 评论区净化功能已启用');
-            }
-            
-            waitForFeed();
-        }
-        
-        waitForContents();
-    }
-    
-    observeComments();
-}
-
-
-    // 评论区锁定功能
-    function initCommentLock(pageType) {
-        var commentApp;
-        switch (pageType) {
-            case "video":
-                commentApp = document.querySelector('#commentapp');
-                break;
-            case "bangumi":
-                commentApp = document.querySelector('#comment-body');
-                break;
-            default:
-                return;
-        }
-        if (!commentApp || document.querySelector('#comment-lock-container')) {
-            return;
-        }
-
-        // 创建遮罩容器
-        const container = document.createElement('div');
-        container.id = 'comment-lock-container';
-
-        // 创建遮罩层
-        const overlay = document.createElement('div');
-        overlay.id = 'comment-lock-overlay';
-        overlay.innerHTML = `
-            <button id="unlock-comment-btn">🔒 解锁评论区</button>
-            <div id="lock-hint">在查看评论前，请先思考一下</div>
-        `;
-
-        // 以容器包裹评论区
-        commentApp.parentNode.insertBefore(container, commentApp);
-        container.appendChild(commentApp);
-        container.appendChild(overlay);
-
-        // 点击解锁按钮
-        const unlockBtn = overlay.querySelector('#unlock-comment-btn');
-        unlockBtn.addEventListener('click', showDialog);
-
-        console.log('[Bilibili纯粹化] 评论区锁定已启用');
-    }
-
-    function showDialog() {
-        // 创建对话框
-        const dialogOverlay = document.createElement('div');
-        dialogOverlay.id = 'comment-dialog-overlay';
-
-        dialogOverlay.innerHTML = `
-            <div id="comment-dialog">
-                <h2>请确认你真的想进入这个评论区。</h2>
-                <p>保持清醒，不要被平台/媒体操控。</p>
-                <p>思考：你现在希望从评论中获得什么？</p>
-
-                <div id="countdown">3</div>
-
-                <div id="input-area">
-                    <input type="text" autocomplete="off" id="reflection-input" placeholder="请输入：我保持思考" />
-                    <button id="confirm-btn">确认解锁</button>
-                    <div id="error-msg"></div>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(dialogOverlay);
-
-        // 倒计时逻辑
-        let count = 3;
-        const countdownEl = document.getElementById('countdown');
-        const inputArea = document.getElementById('input-area');
-        const confirmBtn = document.getElementById('confirm-btn');
-        const input = document.getElementById('reflection-input');
-        const errorMsg = document.getElementById('error-msg');
-
-        const timer = setInterval(() => {
-            count--;
-            countdownEl.textContent = count;
-
-            if (count === 0) {
-                clearInterval(timer);
-                countdownEl.textContent = '✓';
-                countdownEl.classList.add('completed');
-                inputArea.classList.add('unlocked');
-                input.focus();
-            }
-        }, 1000);
-
-        // 确认按钮逻辑
-        confirmBtn.addEventListener('click', () => {
-            if (input.value.trim() === '我保持思考') {
-                // 解锁评论区 - 直接移除遮罩层
-                const lockOverlay = document.querySelector('#comment-lock-overlay');
-                if (lockOverlay) {
-                    lockOverlay.remove();
-                }
-                dialogOverlay.remove();
-
-                console.log('[Bilibili纯粹化] 评论区已解锁');
-            } else {
-                errorMsg.textContent = '请输入正确的文字';
-                input.style.borderColor = '#e74c3c';
-
-                setTimeout(() => {
-                    errorMsg.textContent = '';
-                    input.style.borderColor = '#ddd';
-                }, 2000);
-            }
         });
 
-        // 支持回车键确认
-        input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                confirmBtn.click();
-            }
-        });
-
-        // 点击遮罩关闭
-        dialogOverlay.addEventListener('click', (e) => {
-            if (e.target === dialogOverlay) {
-                dialogOverlay.remove();
-            }
-        });
-    }
-
-    // 评论区锁定初始化
-    function waitForComment(pageType) {
-        const observer = new MutationObserver(() => {
-            const biliComments = document.querySelector('bili-comments')
-            if (biliComments && !document.querySelector('#comment-lock-container')) {
-                initCommentLock(pageType);
-            }
-        });
-
-        if (document.body) {
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true
-            });
-        } else {
-            setTimeout(() => waitForComment(pageType), 100);
-        }
+        document.querySelectorAll(selector).forEach(el => processElement(el));
+        mainObserver.observe(document.documentElement, { childList: true, subtree: true });
     }
 
     //取消自动连播
@@ -1634,24 +956,643 @@ function purifyComments() {
         setTimeout(() => observer.disconnect(), 10000);
     }
 
+    // 修复播放页滚动
+    function fixScroll() {
+        const style = document.createElement('style');
+        style.textContent = `
+            .left-container.scroll-sticky, 
+            .right-container-inner.scroll-sticky {
+                position: static !important;
+            }
+        `;
+        document.head.appendChild(style);
+
+        const targets = ['div.left-container', 'div.right-container-inner'];
+
+        const lockElement = (el) => {
+            el.classList.remove('scroll-sticky');
+            el.style.setProperty('position', 'static', 'important');
+
+            // 冻结 style 属性
+            const originalStyle = el.style;
+            Object.defineProperty(el, 'style', {
+                get: () => originalStyle,
+                set: () => {}, // 拦截赋值
+                configurable: false
+            });
+
+            // 拦截 setAttribute
+            const rawSetAttribute = el.setAttribute;
+            el.setAttribute = function(name) {
+                if (name.toLowerCase() === 'style') return;
+                rawSetAttribute.apply(this, arguments);
+            };
+        };
+
+        const observer = new MutationObserver(() => {
+            targets.forEach(selector => {
+                const el = document.querySelector(selector);
+                if (el && !el.dataset.locked) {
+                    el.dataset.locked = "true";
+                    lockElement(el);
+                }
+            });
+        });
+
+        observer.observe(document.documentElement, {
+            childList: true,
+            subtree: true
+        });
+    }
+
+    // 自动关闭弹幕
+    const autoCloseDanmaku = () => {
+        let executed = false;
+
+        const tryClose = () => {
+            if (executed) return;
+
+            const container = document.querySelector('.bpx-player-dm-setting');
+            const switchInput = document.querySelector('input.bui-danmaku-switch-input');
+
+            if (container && switchInput && !container.classList.contains('disabled')) {
+                switchInput.click();
+                executed = true;
+                console.log('[Bilibili纯粹化] 弹幕已关闭');
+                observer.disconnect();
+            } else if (container && container.classList.contains('disabled')) {
+                executed = true;
+                console.log('[Bilibili纯粹化] 弹幕已关闭');
+                observer.disconnect();
+            }
+        };
+
+        const observer = new MutationObserver(() => {
+            tryClose();
+        });
+
+        observer.observe(document.documentElement, {
+            childList: true,
+            subtree: true
+        });
+
+        tryClose();
+    };
+
+
     // 视频页/列表播放页相关功能
     if (window.location.pathname.includes('/video/') || window.location.pathname.includes('/list/')) {
-        //评论区锁定
-        waitForComment("video");
-        //关闭自动连播
         autoContinuousOff();
-        //评论区净化
-        purifyComments();
+        fixScroll();
+        autoCloseDanmaku();
+
+        //关注按钮 关注数隐藏
+        const hideSubAmount = () => {
+            const targets = document.querySelectorAll(`
+                .follow-btn.not-follow, 
+                .follow-btn.following,
+                .bpx-player-ending-functions-follow
+            `);
+
+            targets.forEach(container => {
+                if (container.style.display === 'none') return;
+
+                const isFollowing = container.classList.contains('following') || 
+                                    container.classList.contains('bpx-state-disabled') ||
+                                    container.innerText.includes('已关注');
+                
+                const targetText = isFollowing ? '已关注' : '关注';
+
+                const walk = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+                let node;
+                
+                while (node = walk.nextNode()) {
+                    const trimmed = node.textContent.trim();
+                    if (trimmed && trimmed !== targetText) {
+                        // 只要包含“关注”字样或数字，就统一重写
+                        if (trimmed.includes('关注') || /[\d.]+[万]?/.test(trimmed)) {
+                            node.textContent = targetText;
+                        }
+                    }
+                }
+            });
+        };
+
+        const startObserver = () => {
+            if (!document.body) {
+                requestAnimationFrame(startObserver);
+                return;
+            }
+
+            hideSubAmount();
+
+            const observer = new MutationObserver((mutations) => {
+                const shouldUpdate = mutations.some(m => 
+                    m.type === 'childList' || m.type === 'characterData'
+                );
+                if (shouldUpdate) hideSubAmount();
+            });
+
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+                characterData: true
+            });
+        };
+
+        startObserver();
+
+
+        // 隐藏特殊标签
+        const hideSPTags = () => {
+            const selectors = ['div.topic-tag', 'div.bgm-tag'];
+
+            selectors.forEach(selector => {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(el => {
+                    if (el && el.parentElement) {
+                        if(el.parentElement.style.display != 'none') el.parentElement.style.setProperty('display', 'none', 'important');
+                    }
+                });
+            });
+        };
+        hideSPTags();
+
+        const tagObserver = new MutationObserver((mutations) => {
+            hideSPTags();
+        });
+
+        tagObserver.observe(document.documentElement, {
+            childList: true,
+            subtree: true
+        });
+
+        observeAndApplyStyle('a.up-name.vip',{});
+        observeAndRemoveClass('a.up-name.vip','vip');
+        observeAndApplyStyle('a.name',{});
+        observeAndApplyStyle('a.staff-name',{});
+        observeAndApplyStyle('a.up-name',{color:'var(--text1)'});
+
+        //将头像的直播间链接换位空间
+        observeAndExecute('a.up-avatar', (el) => {
+            if(el.getAttribute("href").includes("live")){
+                el.setAttribute("href",document.querySelector('a.up-name').getAttribute("href"))
+            }
+        })
     }
 
     //剧播放页相关功能
-    if (window.location.pathname.includes('/bangumi/')) {
-        //评论区锁定
-        waitForComment("bangumi");
-        //评论区净化
-        purifyComments();
+    if (window.location.pathname.includes('/bangumi/play') || window.location.pathname.includes('/watchroom/')) {
+        fixScroll();
+        autoCloseDanmaku();
+
+        const hideDataText = () => {
+            const texts = document.querySelectorAll('span.info-text');
+            if(!texts) return;
+            texts.forEach(text => {
+                if(text.textContent.trim() != "一起看"){
+                    text.style.setProperty('display', 'none', 'important');
+                }
+            })
+        };
+        hideDataText();
+
+        const startObserver = () => {
+            if (!document.body) {
+                setTimeout(startObserver, 10);
+                return;
+            }
+
+            hideDataText();
+
+            const observer = new MutationObserver(hideDataText);
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        };
+
+        startObserver()
     }
 
+    //信息页
+    if (window.location.hostname == ("message.bilibili.com")){
+        const hideMessages = () => {
+            const items = document.querySelectorAll('div.message-sidebar__item-name');
+            items.forEach(item => {
+                const text = item.textContent.trim();
+                if (text === "回复我的" || text === "收到的赞" || text === "@ 我的") {
+                    item.parentElement?.style.setProperty('display', 'none', 'important');
+                }
+            });
+        };
+
+        hideMessages();
+
+        const startObserver = () => {
+            if (!document.body) {
+                setTimeout(startObserver, 10);
+                return;
+            }
+
+            hideMessages();
+
+            // 启动观察者
+            const observer = new MutationObserver(hideMessages);
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        };
+
+        startObserver()
+    }
+
+    // 空间页 / 稍后再看
+    if (window.location.hostname == ("space.bilibili.com") || window.location.pathname.includes("/watchlater/list")){
+        const hideViews = () => {
+            const danmakus = document.querySelectorAll('i.sic-BDC-danmu_square_line');
+            danmakus.forEach(danmaku => {
+                danmaku.parentElement?.style.setProperty('display', 'none', 'important');
+            });
+            const views = document.querySelectorAll('i.sic-BDC-playdata_square_line');
+            views.forEach(view => {
+                view.parentElement?.style.setProperty('display', 'none', 'important');
+            });
+            const thumbsups = document.querySelectorAll('i.sic-BDC-hand_thumbsup_line');
+            thumbsups.forEach(thumbup => {
+                thumbup.parentElement?.style.setProperty('display', 'none', 'important');
+            })
+            const headsetAudios = document.querySelectorAll('i.sic-BDC-headset_audio_line');
+            headsetAudios.forEach(headsetAudio => {
+                headsetAudio.parentElement?.style.setProperty('display', 'none', 'important');
+            })
+            const eyeIcons = document.querySelectorAll('i.sic-BDC-eye_browse_line')
+            eyeIcons.forEach(eyeIcon => {
+                eyeIcon.parentElement?.style.setProperty('display', 'none', 'important');
+            })
+        };
+
+        const hideSocialDataForSubList = () => {
+            const hideStyle = `
+                #follow, #fans, #like, #ov-icon, #ov, #level, #vip {
+                    display: none !important;
+                }
+                #name {
+                    color: var(--text1) !important;
+                }
+                `;
+
+            const profile = document.querySelector('bili-user-profile');
+            if(!profile) return;
+            const shadow = profile.shadowRoot;
+            if (shadow) {
+                const sheet = new CSSStyleSheet();
+                sheet.replaceSync(hideStyle);
+                shadow.adoptedStyleSheets = [...shadow.adoptedStyleSheets, sheet];
+            }
+        }
+
+        const hideFansCollapseList = () => {
+            const headers = document.querySelectorAll('div.vui_collapse_item_header');
+            if(!headers) return;
+            headers.forEach(header => {
+                if(header.textContent.trim().includes("粉丝")) {
+                    header.parentElement?.style.setProperty('display', 'none', 'important');
+                }
+            })
+        }
+
+        hideViews();
+        hideSocialDataForSubList();
+        hideFansCollapseList();
+
+        const startObserver = () => {
+            if (!document.body) {
+                setTimeout(startObserver, 10);
+                return;
+            }
+
+            hideViews();
+            hideSocialDataForSubList();
+            hideFansCollapseList();
+
+            const hvObserver = new MutationObserver(hideViews);
+            hvObserver.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+
+            const hsObserver = new MutationObserver(hideSocialDataForSubList);
+            hsObserver.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+
+            const hfObserver = new MutationObserver(hideFansCollapseList);
+            hfObserver.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        };
+
+        startObserver();
+
+        observeAndRemoveClass('.bili-dyn-title__text', 'normal-vip-color');
+        observeAndApplyStyle('a.bili-user-profile-view__info__uname',{});
+        observeAndApplyStyle('a.relation-card-info__uname.vip',{});
+        observeAndRemoveClass('a.relation-card-info__uname','vip');
+        observeAndApplyStyle('a.relation-card-info__uname',{color:'var(--text1)'});
+
+        //关注按钮老粉样式
+        observeAndRemoveClass('.space-follow-btn.oldfan','oldfan')
+
+    }
+
+    // 番剧信息页
+    if (window.location.pathname.includes('/bangumi/media/')){
+        const hideCommentBtn = () => {
+            const container = document.querySelector('ul[class="clearfix"]');
+            if(!container) return;
+            if(!container.childNodes) return;
+            container.childNodes.forEach(li => {
+                if(li.textContent.trim() != "作品详情") {
+                    li.style.setProperty('display', 'none', 'important');
+                }
+            });
+        };
+
+        const hideRelatedVideos = () => {
+            const titles = document.querySelectorAll('div.media-tab-module-title');
+            if(!titles) return;
+            titles.forEach(title => {
+                if(title.textContent.trim() == "相关视频"){
+                    title.parentElement?.style.setProperty('display', 'none', 'important');
+                }
+            })
+        }
+
+        hideRelatedVideos();
+        hideCommentBtn();
+
+        const startObserver = () => {
+            if (!document.body) {
+                setTimeout(startObserver, 10);
+                return;
+            }
+
+            hideCommentBtn();
+            hideRelatedVideos();
+
+            // 启动观察者
+            const cmtObserver = new MutationObserver(hideCommentBtn);
+            cmtObserver.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+
+            const rvdObserver = new MutationObserver(hideRelatedVideos);
+            rvdObserver.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        };
+
+        startObserver()
+    }
+
+    // 搜索页功能
+    if (window.location.hostname == "search.bilibili.com") {
+
+        const blockedKeywordsForBtn = ['粉丝数', '等级', '点赞', '评论', '最多播放', '最多收藏', '最多喜欢', '最多点击'];
+
+        const style = document.createElement('style');
+        style.innerHTML = `
+            .hide-social-btn { 
+                display: none !important; 
+            }
+        `;
+        (document.head || document.documentElement).appendChild(style);
+
+        // 核心清理函数
+        const cleanBilibiliSearch = () => {
+            // --- 隐藏按钮 ---
+            const buttons = document.querySelectorAll('button.vui_button--tab');
+            buttons.forEach(btn => {
+                const shouldHide = blockedKeywordsForBtn.some(keyword => btn.textContent.includes(keyword));
+                if (shouldHide) {
+                    btn.classList.add('hide-social-btn');
+                }
+            });
+
+            // --- 删除文字内容 ---
+            const regex = /\d+(\.\d+)?[万亿]?\s*(人关注直播间|粉丝|点赞|条评论|个视频)/g;
+            const residueRegex = /^[·\s\u00A0]+|[·\s\u00A0]+$/g;
+
+            const selectors = '.text_ellipsis, .atc-info, .text2, [data-v-2532694c], [data-v-1d775126], [data-v-313a3d44]';
+            document.querySelectorAll(selectors).forEach(el => {
+                if (!el) return;
+
+                // 清理 title 
+                const oldTitle = el.getAttribute('title');
+                if (oldTitle && regex.test(oldTitle)) {
+                    el.setAttribute('title', oldTitle.replace(regex, '').replace(residueRegex, '').trim());
+                }
+
+                // 清理文本
+                const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
+                let node;
+                while (node = walk.nextNode()) {
+                    if (regex.test(node.nodeValue)) {
+                        node.nodeValue = node.nodeValue.replace(regex, '').replace(residueRegex, '').trim();
+                    }
+                }
+
+                if (el.children.length === 0 && (el.textContent.trim() === '·' || el.textContent.trim() === '')) {
+                    el.textContent = '';
+                }
+            });
+
+            // 综合栏用户粉丝数
+            const userDescElements = document.querySelectorAll('p.user-video-desc');
+            if (userDescElements.length > 0) {
+                userDescElements.forEach(el => {
+                    let htmlContent = el.innerHTML;
+
+                    const fanCountRegex = /(粉丝|视频)：[\d\.万]+(\s·\s)?/;
+
+                    if (fanCountRegex.test(htmlContent)) {
+                        el.innerHTML = htmlContent.replace(fanCountRegex, '');
+                    }
+                });
+            }
+        };
+
+
+        const startObserver = () => {
+            const targetNode = document.body || document.documentElement;
+            if (!targetNode) {
+                setTimeout(startObserver, 50);
+                return;
+            }
+
+            const observer = new MutationObserver(() => {
+                window.requestAnimationFrame(cleanBilibiliSearch);
+            });
+
+            observer.observe(targetNode, {
+                childList: true,
+                subtree: true
+            });
+
+            cleanBilibiliSearch();
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', startObserver);
+        } else {
+            startObserver();
+        }
+    }
+
+    // 专栏页
+    if (window.location.pathname.includes('/read/')) {
+        const style = document.createElement('style');
+        style.textContent = `
+            /* 隐藏文章信息栏中除发布时间外的所有 span (浏览、点赞、评论) */
+            .article-read-info span:not(.publish-text) {
+                display: none !important;
+            }
+
+            /* 移除信息栏中多余的点号分隔符*/
+            .article-read-info {
+                font-size: 0;
+            }
+            .article-read-info > * {
+                font-size: 13px;
+            }
+
+            /* 隐藏侧边栏中包含评论图标的整个工具项 */
+            .side-toolbar .toolbar-item:has(.icon-comment) {
+                display: none !important;
+            }
+        `;
+        (document.head || document.documentElement).appendChild(style);
+
+        //文集页面 "xx次阅读"
+        const cleanStrictly = () => {
+            const candidates = document.querySelectorAll('.desc');
+
+            candidates.forEach(container => {
+                const subDivs = Array.from(container.querySelectorAll('div'));
+                
+                const hasColumnInfo = subDivs.some(d => d.textContent.includes('篇专栏'));
+                const hasWordCount = subDivs.some(d => d.textContent.includes('个字'));
+                
+                if (hasColumnInfo || hasWordCount) {
+                    subDivs.forEach(div => {
+                        if (/^\d+次阅读$/.test(div.textContent.trim())) {
+                            div.remove();
+                        }
+                    });
+                }
+            });
+        };
+
+        const observer = new MutationObserver((mutations) => {
+            for (let mutation of mutations) {
+                if (mutation.addedNodes.length) {
+                    cleanStrictly();
+                    break; 
+                }
+            }
+        });
+
+        observer.observe(document.documentElement, {
+            childList: true,
+            subtree: true
+        });
+    }
+
+    // 音频页
+    if (window.location.pathname.includes('/audio/')) {
+        const hideNumbers = () => {
+            // 检索所有包含数字的 div 并隐藏
+            const shareDivs = document.querySelectorAll('.song-share > div');
+            shareDivs.forEach(div => {
+                if (div.style.display !== 'none') {
+                    div.style.display = 'none';
+                }
+            });
+        };
+
+        // 1. 立即执行一次
+        hideNumbers();
+
+        // 2. 动态监听后续加载的内容
+        const observer = new MutationObserver((mutations) => {
+            hideNumbers();
+        });
+
+        // 开始监听 body 及其子元素的变化
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    }
+
+    // 动态页
+    if(window.location.hostname == "t.bilibili.com" || window.location.pathname.includes("/opus/")){
+        observeAndApplyStyle('a.bili-user-profile-view__info__uname',{});
+        observeAndApplyStyle('div.bili-dyn-my-info__stats',{display:'flex',justifyContent:'space-around'});
+        observeAndRemoveClass('span.bili-dyn-title__text','normal-vip-color');
+        observeAndApplyStyle('div.opus-module-author__name',{color:'var(--text1)'});
+
+        observeAndExecute('div.opus-module-author__pub__text', (el) => {
+            if (el.textContent.includes('浏览')) {
+                el.textContent = el.textContent.replace(/\s?\d+浏览/g, '').trim();
+            }
+        });
+    }
+
+    //话题页
+    if(window.location.pathname.includes("/topic/")){
+        observeAndRemoveClass('span.bili-dyn-title__text','normal-vip-color');
+        observeAndApplyStyle('a.bili-user-profile-view__info__uname',{})
+    }
+
+
+
+    // ==== 顶部栏功能 ====
+    function removeAvatarPanelFans() {
+        const texts = document.querySelectorAll("div.count-text");
+        if(!texts) return;
+        texts.forEach(text => {
+            if(text.textContent.trim() == "粉丝") {text.parentElement.style.setProperty('display', 'none', 'important');
+            text.parentElement.parentElement.style.display = 'flex';
+            text.parentElement.parentElement.style.justifyContent = 'space-around';}
+        })
+    }
+
+    function startHeaderObserver() {
+        if (!document.body) {
+            setTimeout(startHeaderObserver, 10);
+            return;
+        }
+
+        removeAvatarPanelFans();
+
+        const observer = new MutationObserver(removeAvatarPanelFans);
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    }
+
+    startHeaderObserver();
+    // ====        ====
+
+    
     
     // 直播间聊天框彩色背景/彩色名字/彩色名字/特殊弹幕移除功能
     function removeChatColors() {
@@ -1756,12 +1697,41 @@ function purifyComments() {
         setTimeout(() => clearInterval(checkChatContainer), 10000);
     }
 
+    // 直播页聊天框占比平衡(去除brush-prompt即进场提示)
+    function fixLiveChatBrushPrompt(){
+        const targetNode = document.getElementById('chat-history-list');
+
+        if (!targetNode) {
+            return;
+        }
+
+        const removeTargetClass = () => {
+            if (targetNode.classList.contains('with-brush-prompt')) {
+                targetNode.classList.remove('with-brush-prompt');
+            }
+        };
+
+        removeTargetClass();
+
+        const observer = new MutationObserver((mutationsList) => {
+            for (const mutation of mutationsList) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    removeTargetClass();
+                }
+            }
+        });
+
+        observer.observe(targetNode, { attributes: true });
+    }
+
     // 直播页启用聊天净化
     if (window.location.hostname === 'live.bilibili.com') {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initLiveChatObserver);
+            document.addEventListener('DOMContentLoaded', fixLiveChatBrushPrompt);
         } else {
             initLiveChatObserver();
+            fixLiveChatBrushPrompt()
         }
     }
 
