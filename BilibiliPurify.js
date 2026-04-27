@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      2.0.1
+// @version      2.0.2
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、隐藏评论区等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -161,6 +161,8 @@
         //直播页up主认证图标
         'div.blive-avatar-icons',
         'div.blive-avatar-icon',
+        //直播页活动样式下方用户认证图标
+        '.activity-follow-face::after',
 
         //动态页视频播发量弹幕量显示
         'div.bili-dyn-card-video__stat__item',
@@ -1138,12 +1140,22 @@
         observeAndApplyStyle('a.staff-name',{});
         observeAndApplyStyle('a.up-name',{color:'var(--text1)'});
 
-        //将头像的直播间链接换位空间
+        //将头像的直播间链接换为空间
         observeAndExecute('a.up-avatar', (el) => {
             if(el.getAttribute("href").includes("live")){
-                el.setAttribute("href",document.querySelector('a.up-name').getAttribute("href"))
+                el.setAttribute("href",document.querySelector('a.up-name').getAttribute("href"));
             }
         })
+
+        //修复有头像框的头像大小
+        observeAndExecute('.bili-avatar', (el) => {
+            if(el.style.width == '40.8px'){
+                el.style.width = '48px';
+                el.style.height = '48px';
+                el.style.transform = 'translate(0px, 0px)';
+            }
+        })
+
     }
 
     //剧播放页相关功能
