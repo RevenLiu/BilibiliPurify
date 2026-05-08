@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      2.0.3
+// @version      2.0.4
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、隐藏评论区等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -165,6 +165,8 @@
         'div.blive-avatar-icon',
         //直播页活动样式下方用户认证图标
         '.activity-follow-face::after',
+        //直播页播放器上方栏活动入口按钮
+        'div.activity-gather-entry.activity-entry',
 
         //动态页视频播发量弹幕量显示
         'div.bili-dyn-card-video__stat__item',
@@ -198,6 +200,10 @@
         'span.bili-avatar-icon.bili-avatar-right-icon',
         //搜索页游戏/课程/活动广告
         'div.activity-game-list.i_wrapper.search-all-list',
+        //搜索页百大特殊遮罩
+        'div.bili-100-bg',
+        //搜索页百大特殊金人
+        'img.bili-100-img',
 
 
         //番剧页评分及数值信息
@@ -826,6 +832,35 @@
             elements.forEach(el => {
                 if (el.classList.contains(classToRemove)) {
                     el.classList.remove(classToRemove);
+                }
+            });
+        };
+
+        processElements();
+
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach(() => {
+                processElements();
+            });
+        });
+
+        observer.observe(document.documentElement, {
+            childList: true,
+            subtree: true
+        });
+    }
+
+    /**
+     * 自动检测并给指定元素的添加特定 Class
+     * @param {string} selector - CSS 选择器
+     * @param {string} classToAdd - 需要添加的类名
+     */
+    function observeAndAddClass(selector, classToAdd) {
+        const processElements = () => {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(el => {
+                if (!el.classList.contains(classToAdd)) {
+                    el.classList.add(classToAdd);
                 }
             });
         };
@@ -1757,7 +1792,7 @@
         observer.observe(targetNode, { attributes: true });
     }
 
-    // 直播页启用聊天净化
+    // 直播页功能
     if (window.location.hostname === 'live.bilibili.com') {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initLiveChatObserver);
@@ -1766,6 +1801,10 @@
             initLiveChatObserver();
             fixLiveChatBrushPrompt()
         }
+
+        observeAndRemoveClass('span.bili-dyn-title__text', 'normal-vip-color');
+        observeAndAddClass('span.bili-dyn-title__text', 'default');
+        observeAndApplyStyle('a.bili-user-profile-view__info__uname',"");
     }
 
     //直播间首页播放器删除
