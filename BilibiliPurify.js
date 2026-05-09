@@ -2,7 +2,7 @@
 // @name         Bilibili Purify
 // @name:zh-CN   Bilibili纯粹化
 // @namespace    https://github.com/RevenLiu
-// @version      2.0.4
+// @version      2.0.5
 // @description  一个用于Bilibili平台的篡改猴脚本。以一种直接的方式抵抗商业化平台对人类大脑的利用。包含重定向首页、隐藏广告、隐藏推荐视频、隐藏评论区等功能，削弱平台/媒体对你心理的操控，恢复你对自己注意力和思考的主导权。
 // @author       RevenLiu
 // @license      MIT
@@ -1352,7 +1352,8 @@
 
         startObserver();
 
-        observeAndRemoveClass('.bili-dyn-title__text', 'normal-vip-color');
+        observeAndRemoveClass('span.bili-dyn-title__text','normal-vip-color');
+        observeAndAddClass('span.bili-dyn-title__text','default');
         observeAndApplyStyle('a.bili-user-profile-view__info__uname',{});
         observeAndApplyStyle('a.relation-card-info__uname.vip',{});
         observeAndRemoveClass('a.relation-card-info__uname','vip');
@@ -1600,6 +1601,7 @@
         observeAndApplyStyle('a.bili-user-profile-view__info__uname',{});
         observeAndApplyStyle('div.bili-dyn-my-info__stats',{display:'flex',justifyContent:'space-around'});
         observeAndRemoveClass('span.bili-dyn-title__text','normal-vip-color');
+        observeAndAddClass('span.bili-dyn-title__text','default');
         observeAndApplyStyle('div.opus-module-author__name',{color:'var(--text1)'});
 
         observeAndExecute('div.opus-module-author__pub__text', (el) => {
